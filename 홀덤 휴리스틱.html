@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Poker Training</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rounded+Mplus+1c:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #1a1a1a; color: white; font-weight: bold; }
+        .container { padding: 20px; box-sizing: border-box; }
+
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            min-height: calc(100vh - 40px);
+        }
+        .title-bar {
+            background: #404040;
+            color: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 8px 0;
+            position: relative;
+            top: 5px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            margin-top: 11px;
+        }
+        .home-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            top: -35px;
+        }
+        .options-container {
+            width: 100%;
+            max-width: 500px;
+        }
+        .options-row[data-group="position"],
+        .options-row[data-group="preflop"],
+        .options-row[data-group="spot"] {
+            margin-bottom: -12px;
+        }
+        .options-row[data-group="villain"] {
+            margin-bottom: 5px;
+        }
+        .row-title {
+            color: #808080;
+            font-size: 8px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: left;
+            position: relative;
+            top: 4.4px;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+        .buttons-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .option-button {
+            background: #2a2a2a;
+            color: white;
+            padding: 3px 0;
+            flex-grow: 1;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            font-weight: 700;
+            border-radius: 4px;
+            opacity: 0.8;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+        .option-button.selected {
+            background: #404040;
+            opacity: 1.0;
+        }
+        .option-button:disabled {
+            background: #1f1f1f;
+            color: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .start-button {
+            background: #4CAF50;
+            color: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 6.5px 0;
+            cursor: pointer;
+            border: none;
+            font-size: 24px;
+            font-family: Arial;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            border-radius: 8px;
+            margin-top: 0;
+        }
+
+        #start-screen .table {
+            position: relative;
+            transform: none;
+            left: auto;
+            top: auto;
+            margin-bottom: 55px;
+        }
+        #start-screen .table .card,
+        #start-screen .table .pot-display,
+        #start-screen .table div[style*="top: 290px"],
+        #start-screen .table .stack-inner {
+            display: none;
+        }
+
+        #training-screen {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #background-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 330px;
+            bottom: 0;
+            background-color: #262626;
+            z-index: -1;
+        }
+
+
+        .table {
+            background: transparent;
+            width: 590px;
+            height: 280px;
+            margin: 0 auto;
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 150px;
+            border: 2px solid #808080;
+        }
+        .card {
+            position: absolute;
+            width: 46px;
+            height: 68px;
+            background: #FFFFFF;
+            border: none;
+            border-radius: 5px;
+        }
+        .card::before {
+            content: attr(data-suit-symbol);
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-weight: bold;
+            color: rgba(0, 3, 3, 0.5);
+        }
+        .card[data-suit="diamonds"]::before { font-size: 15px; transform: scaleX(0.8); }
+        .card[data-suit="hearts"]::before,
+        .card[data-suit="clubs"]::before { font-size: 19px; }
+        .card[data-suit="spades"]::before { font-size: 21px; }
+        .card::after {
+            content: attr(data-rank);
+            position: absolute;
+            top: 58%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px; color: #FFFFFF; font-weight: bold;
+        }
+        #hero-card1, #hero-card2 {
+            width: 39px;
+            height: 58px;
+        }
+        #hero-card1::after, #hero-card2::after {
+            font-size: 26px;
+        }
+        .card[data-suit="hearts"] { background: #8B0000; }
+        .card[data-suit="diamonds"] { background: #1E90FF; }
+        .card[data-suit="clubs"] { background: #228B22; }
+        .card[data-suit="spades"] { background: #696969; }
+        
+        .action-buttons-container, #reaction-buttons-container {
+            margin-top: 415px;
+        }
+        .action-buttons, .reaction-buttons { 
+            display: flex; 
+            justify-content: center; 
+        }
+        .action-button, .reaction-button {
+            color: white; padding: 20px 40px; margin: 3.75px;
+            cursor: pointer; border: none; border-radius: 4px;
+            font-size: 20px; font-weight: bold;
+        }
+        .action-button {
+             flex-grow: 1;
+             max-width: 170px;
+        }
+        .reaction-button {
+             flex-grow: 1;
+             max-width: 200px;
+        }
+        .action-button:disabled, .reaction-button:disabled { background: #555 !important; cursor: not-allowed; }
+        
+        /* 행동 버튼 */
+        .action-button[data-action="check"] { background: #23d96d; }
+        /* 3BP OOP Flop 전용 */
+        .action-button[data-action="bet12"] { background: #e57373; color: #1a1a1a;}
+        .action-button[data-action="bet24"] { background: #d95f5a; }
+        .action-button[data-action="bet50"] { background: #f05650; }
+        .action-button[data-action="bet70"] { background: #d92334; }
+        /* 3BP IP 전용 */
+        .action-button[data-action="bet15"] { background: #e57370; color: #1a1a1a; } /* Adjusted color for better contrast */
+        .action-button[data-action="bet30"] { background: #d95f5a; }
+        .action-button[data-action="bet60"] { background: #f05650; }
+        .action-button[data-action="bet80"] { background: #d92334; }
+        /* SRP IP Flop & IP Delay CB */
+        .action-button[data-action="bet66"] { background: #f05650; }
+        .action-button[data-action="bet120"] { background: #d92334; }
+        /* SRP OOP Flop */
+        .action-button[data-action="bet25"] { background: #d95f5a; }
+        /* SRP OOP Turn */
+        .action-button[data-action="bet33"] { background: #d95f5a; }
+        .action-button[data-action="bet230"] { background: #8b0000; }
+        /* SRP IP Turn Barrel */
+        .action-button[data-action="bet190"] { background: #b02826; }
+        
+        /* 반응 버튼 */
+        .reaction-button[data-action="call"] { background: #23d96d; }
+        .reaction-button[data-action="fold"] { background: #6495ED;  } 
+
+        .back-button {
+            position: absolute; top: 10px; left: 10px;
+            background: #808080; color: white; padding: 8px 16px;
+            cursor: pointer; border: none; font-size: 16px;
+            border-radius: 4px; font-weight: bold;
+        }
+        .mode-display {
+            position: absolute; top: 10px; left: 120px;
+            background: #404040; color: white; padding: 8px 16px;
+            border-radius: 4px; font-size: 14px; font-weight: bold;
+            line-height: 1.4; 
+        }
+        
+        .position {
+            position: absolute; width: 60px; height: 60px;
+            background: #1a1a1a; color: white; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; font-size: 14px;
+            font-family: 'Rounded Mplus 1c', sans-serif; font-weight: 900;
+            border: 2px solid #808080; letter-spacing: 0.5px; position: relative;
+        }
+        
+        .position-indicator {
+            position: absolute; width: 15px; height: 15px;
+            background: #FFFFFF; color: #000000; border-radius: 50%;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            bottom: -10px; left: -10px;
+        }
+        .my-position { border: 2px solid #23d96d !important; }
+        .opponent-position { border: 2px solid #b02826 !important; }
+        
+        #pos-btn, #pos-btn-deco { bottom: 31px; left: 360px; }
+        #pos-sb, #pos-sb-deco { top: 30px; left: 556px; }
+        #pos-bb, #pos-bb-deco { top: 120px; left: 360px; }
+        #pos-utg, #pos-utg-deco { top: 57px; left: 160px; }
+        #pos-mp, #pos-mp-deco { bottom: 160px; right: 30px; }
+        #pos-co, #pos-co-deco { bottom: 351px; left: 160px; }
+        
+        .stack-inner {
+            margin-top: -5px; color: white; font-size: 10px;
+            font-weight: bold; text-align: center;
+        }
+        .pot-display {
+            position: absolute; top: 60px; left: 50%;
+            transform: translateX(-50%); background: #333;
+            padding: 5px 10px; border-radius: 5px; color: white;
+            font-size: 14px; font-weight: bold;
+        }
+        #on-table-context-display {
+            position: absolute;
+            /* Previous `bottom: 10px;` was here. Now using `top` for primary vertical positioning */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 5px;
+            color: #ccc;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            display: none; /* Initially hidden */
+            
+            /* New positioning for the entire block (adjusted to be lower and more centered) */
+            top: 150px; /* Adjusted to visually lower the entire block even more */
+            display: flex; /* Use flexbox to control inner lines */
+            flex-direction: column;
+            align-items: center; /* Center horizontally if text is multiple lines */
+            justify-content: center; /* Center vertically if space allows */
+            line-height: 1.0; /* Reduce overall line height of the block */
+        }
+        /* Specific style for the second line within on-table-context-display */
+        #on-table-context-display > div {
+            margin-top: 8px; /* Adjusted margin-top for more visual separation */
+            line-height: 1.0; /* Ensure this line itself doesn't have extra line height */
+        }
+        
+        .bet-indicator {
+            position: absolute;
+            display: none;
+            flex-direction: column; 
+            align-items: center;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            gap: 2px; 
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            color: #a0a0a0;
+        }
+        
+        .bet-indicator-top-line {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bet-chip-symbol {
+            display: inline-block;
+            width: 10px; 
+            height: 10px; 
+            background-color: #a0a0a0;
+            border-radius: 50%;
+            color: #a0a0a0;
+            font-size: 8px;
+            line-height: 10px;
+            text-align: center;
+            font-weight: bold;
+            border: none;
+        }
+
+        .bet-chip-text {
+            font-weight: bold;
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+        
+        .bet-size-text {
+            font-size: 10px;
+            color: #cccccc;
+            font-weight: normal;
+        }
+
+        .bet-indicator.animate-bet {
+            animation: bet-appear 0.3s ease-out forwards;
+        }
+        @keyframes bet-appear {
+            from { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, 0px) scale(1); }
+        }
+
+        #pos-btn .bet-indicator { top: calc(100% + 5px); }
+        #pos-bb .bet-indicator { bottom: calc(100% + 5px); }
+
+        #rng-container {
+            position: absolute; top: 310px; right: 583px; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        #rng-icon {
+            color: #808080; font-size: 24px;
+            transition: opacity 0.3s, text-decoration 0.3s;
+        }
+        #rng-value { font-size: 14px; color: #808080; margin-top: 2px; margin-left: 5px; }
+        #rng-icon.off { text-decoration: line-through; opacity: 0.8; }
+
+        #post-action-controls {
+            display: none;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 590px;
+            margin: 408px auto 0 auto;
+        }
+        .right-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        .feedback { 
+            font-size: 22px; 
+            font-weight: bold; 
+            line-height: 1.4;
+            margin-bottom: 10px;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+        .post-action-buttons { display: flex; align-items: center; gap: 27px; }
+        .post-action-button {
+            color: white; background: none; border: none;
+            cursor: pointer;
+            font-size: 18px; 
+            font-weight: bold;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+        .post-action-button.next-hand { background: #23d96d; padding: 3px 25px; border-radius: 4px; }
+        .next-hand-arrows { letter-spacing: -5px; margin-right: 5px; }
+
+        .score-container {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .score-circle-svg { transform: rotate(-135deg); width: 100%; height: 100%; }
+        .score-circle-bg, .score-circle-progress { fill: none; stroke-width: 3.5; }
+        .score-circle-bg { stroke: #1a1a1a; }
+        .score-circle-progress {
+            stroke: var(--score-color, #23d96d);
+            stroke-linecap: round;
+            stroke-dasharray: 100 100;
+            stroke-dashoffset: 100;
+            transition: stroke-dashoffset 0.5s ease-out, stroke 0.5s;
+        }
+        .score-text {
+            position: absolute;
+            top: 3.5px; left: 3.5px;
+            width: calc(100% - 7px); height: calc(100% - 7px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background-color: var(--score-bg-color, rgba(26, 26, 26, 0.8));
+            border-radius: 50%;
+            transition: background-color 0.5s;
+        }
+        .score-label {
+            font-size: 12px; 
+            color: #FFFFFF; font-weight: bold;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            margin-bottom: -6px;
+        }
+        .score-percentage {
+            font-size: 28px; 
+            font-weight: bold; color: var(--score-color);
+            font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+        
+        #combo-streak-display {
+            position: absolute; 
+            top: -11px; 
+            left: -25px;
+            font-size: 19px; 
+            color: orange; 
+            display: none; 
+            opacity: 0.94;
+            display: flex; 
+            align-items: center; 
+            gap: 2px;
+        }
+        .combo-fire {
+             display: inline-block;
+             text-shadow: none; 
+             text-decoration: none; 
+             animation: flicker 1.5s ease-in-out infinite;
+        }
+        .combo-number {
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            font-weight: 700; color: #aaa;
+            position: relative; top: 3.5px; font-size: 16px;
+        }
+        @keyframes flicker {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(-1deg); }
+            50% { transform: scale(1) rotate(0deg); }
+            75% { transform: scale(1.05) rotate(1deg); }
+        }
+
+        #stats-header-box {
+            position: absolute;
+            top: 110px;
+            left: 0px;    
+            width: 330px;  
+            height: 49px;
+            background-color: #404040;
+            border-radius: 0; 
+            display: flex;
+            align-items: center;
+            padding-left: 15px;
+            box-sizing: border-box;
+            gap: 12px;
+        }
+        .stats-icon {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 18px;
+        }
+        .stats-icon span {
+            display: inline-block;
+            background-color: #aaaaaa;
+            width: 4px;
+            border-radius: 1px 1px 0 0;
+        }
+        .stats-icon .bar1 { height: 12px; }
+        .stats-icon .bar2 { height: 18px; }
+        .stats-icon .bar3 { height: 8px; }
+        .stats-header-text {
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: #aaaaaa; 
+            letter-spacing: 1px;
+            position: relative;
+            top: 1px;
+        }
+
+        #stats-panel {
+            position: absolute;
+            top: 185px; 
+            left: 35px;
+            width: 250px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+            text-align: center;
+        }
+        .stat-item {
+            margin-bottom: 0;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #808080;
+            font-weight: 700;
+        }
+        #stats-panel .stat-item:first-child .stat-label {
+            position: relative;
+            top: 0.3px;
+        }
+        .stat-value {
+            font-size: 20px;
+            color: #FFFFFF;
+            font-weight: 900;
+        }
+
+        #feedback-graphs {
+            position: absolute;
+            top: 292px;
+            left: 30px;
+            width: 270px;
+            font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+        .feedback-graph-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        .graph-icon {
+            font-size: 20px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+        #correct-icon {
+            color: #23d96d;
+        }
+        #incorrect-icon {
+            color: #f05650;
+        }
+        #frequency-error-icon {
+            color: #FFA500;
+        }
+        
+        .graph-value {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            min-width: 30px; 
+            text-align: left;
+        }
+        .graph-bar-container {
+            flex-grow: 1;
+            height: 12px;
+            background-color: #555;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .graph-bar-fill {
+            height: 100%;
+            width: 0%; 
+            border-radius: 6px;
+            transition: width 0.4s ease-in-out;
+        }
+        #correct-bar-fill {
+            background-color: #23d96d;
+        }
+        #incorrect-bar-fill {
+            background-color: #f05650;
+        }
+        #frequency-error-bar-fill {
+            background-color: #FFA500;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container" id="start-screen">
+        <div class="title-bar">GTO Heuristic Training Tool</div>
+        <div class="home-content-wrapper">
+            <div class="table">
+                <div class="position" id="pos-btn-deco">
+                    <div class="position-indicator">D</div>BTN
+                </div>
+                <div class="position" id="pos-sb-deco">SB</div>
+                <div class="position" id="pos-bb-deco">BB</div>
+                <div class="position" id="pos-utg-deco">UTG</div>
+                <div class="position" id="pos-mp-deco">MP</div>
+                <div class="position" id="pos-co-deco">CO</div>
+            </div>
+            <div class="options-container">
+                <div class="options-row" data-group="position"><p class="row-title">HERO POSITION</p><div class="buttons-wrapper"><button class="option-button all-button" data-value="ALL">ALL</button><button class="option-button" data-value="IP">IP</button><button class="option-button" data-value="OOP">OOP</button></div></div>
+                <div class="options-row" data-group="preflop"><p class="row-title">PREFLOP ACTION</p><div class="buttons-wrapper"><button class="option-button all-button" data-value="ALL">ALL</button><button class="option-button" data-value="SRP">SRP</button><button class="option-button" data-value="3BP">3BP</button></div></div>
+                <div class="options-row" data-group="spot"><p class="row-title">END SPOT</p><div class="buttons-wrapper"><button class="option-button" data-value="FLOP">FLOP</button><button class="option-button" data-value="TURN">TURN</button><button class="option-button" data-value="DELAY_CBET">DELAY CBET</button></div></div>
+                <div class="options-row" data-group="villain"><p class="row-title">VS VILLAIN ACTION</p><div class="buttons-wrapper"><button class="option-button all-button" data-value="ALL" disabled>ALL</button><button class="option-button" data-value="vs Bet" disabled>vs Bet</button><button class="option-button" data-value="vs Check Raise" disabled>vs Check Raise</button></div></div>
+            </div>
+            <button class="start-button">▶ START TRAINING</button>
+        </div>
+    </div>
+
+    <div class="container" id="training-screen" style="display: none;">
+        <div id="background-panel"></div>
+
+        <button class="back-button">Back</button>
+        
+        <div id="stats-header-box">
+            <div class="stats-icon">
+                <span class="bar1"></span>
+                <span class="bar2"></span>
+                <span class="bar3"></span>
+            </div>
+            <span class="stats-header-text">STATS</span>
+        </div>
+
+        <div id="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">HANDS</div>
+                <div class="stat-value" id="hands-played-display">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">MOVES</div>
+                <div class="stat-value" id="moves-made-display">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">SCORE</div>
+                <div class="stat-value" id="score-stat-display">0%</div>
+            </div>
+        </div>
+
+        <div id="feedback-graphs">
+            <div class="feedback-graph-item" id="correct-graph">
+                <span class="graph-icon" id="correct-icon">✔</span>
+                <span class="graph-value" id="correct-count">0</span>
+                <div class="graph-bar-container">
+                    <div class="graph-bar-fill" id="correct-bar-fill"></div>
+                </div>
+            </div>
+            <div class="feedback-graph-item" id="incorrect-graph">
+                <span class="graph-icon" id="incorrect-icon">✖</span>
+                <span class="graph-value" id="incorrect-count">0</span>
+                <div class="graph-bar-container">
+                    <div class="graph-bar-fill" id="incorrect-bar-fill"></div>
+                </div>
+            </div>
+            <div class="feedback-graph-item" id="frequency-error-graph">
+                <span class="graph-icon" id="frequency-error-icon">✔</span>
+                <span class="graph-value" id="frequency-error-count">0</span>
+                <div class="graph-bar-container">
+                    <div class="graph-bar-fill" id="frequency-error-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mode-display" id="mode-display">Mode: None</div>
+        <div class="table">
+            <div id="combo-streak-display"></div>
+            <div class="card" id="flop1" style="top: 90px; left: 190px;"></div>
+            <div class="card" id="flop2" style="top: 90px; left: 241px;"></div>
+            <div class="card" id="flop3" style="top: 90px; left: 292px;"></div>
+            <div class="card" id="turn" style="top: 90px; left: 343px; display: none;"></div>
+            <div id="on-table-context-display"></div>
+            <div class="card" id="hero-card1"></div>
+            <div class="card" id="hero-card2"></div>
+            <div id="rng-container">
+                <span id="rng-icon">⚅</span> 
+                <span id="rng-value"></span>
+            </div>
+            <div class="position" id="pos-btn">
+                <div class="position-indicator">D</div>BTN
+                <div class="stack-inner" id="stack-btn"></div>
+                <div class="bet-indicator" id="bet-indicator-btn">
+                    <div class="bet-indicator-top-line">
+                        <span class="bet-chip-symbol">●</span>
+                        <span class="bet-chip-text"></span>
+                    </div>
+                    <span class="bet-size-text"></span>
+                </div>
+            </div>
+            <div class="position" id="pos-sb">SB</div>
+            <div class="position" id="pos-bb">
+                BB
+                <div class="stack-inner" id="stack-bb"></div>
+                <div class="bet-indicator" id="bet-indicator-bb">
+                    <div class="bet-indicator-top-line">
+                        <span class="bet-chip-symbol">●</span>
+                        <span class="bet-chip-text"></span>
+                    </div>
+                    <span class="bet-size-text"></span>
+                </div>
+            </div>
+            <div class="position" id="pos-utg">UTG</div><div class="position" id="pos-mp">MP</div><div class="position" id="pos-co">CO</div>
+            <div class="pot-display" id="pot-display"></div>
+        </div>
+
+        <div class="action-buttons-container" style="display: none;">
+            <div class="action-buttons" id="oop-3bp-flop-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet12">BET 12%</button>
+                <button class="action-button" data-action="bet24">BET 24%</button>
+                <button class="action-button" data-action="bet50">BET 50%</button>
+                <button class="action-button" data-action="bet70">BET 70%</button>
+            </div>
+            <div class="action-buttons" id="ip-3bp-flop-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet15">BET 15%</button>
+                <button class="action-button" data-action="bet30">BET 30%</button>
+                <button class="action-button" data-action="bet60">BET 60%</button>
+            </div>
+            <div class="action-buttons" id="ip-3bp-turn-small-flop-bet-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet30">BET 30%</button>
+                <button class="action-button" data-action="bet60">BET 60%</button>
+                <button class="action-button" data-action="bet80">BET 80%</button>
+            </div>
+            <div class="action-buttons" id="ip-3bp-turn-large-flop-bet-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet30">BET 30%</button>
+                <button class="action-button" data-action="bet60">BET 60%</button>
+            </div>
+            <div class="action-buttons" id="ip-srp-flop-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet30">BET 30%</button>
+                <button class="action-button" data-action="bet66">BET 66%</button>
+                <button class="action-button" data-action="bet120">BET 120%</button>
+            </div>
+            <div class="action-buttons" id="oop-srp-flop-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet25">BET 25%</button>
+                <button class="action-button" data-action="bet50">BET 50%</button>
+                <button class="action-button" data-action="bet120">BET 120%</button>
+            </div>
+            <div class="action-buttons" id="ip-turn-barrel-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet66">BET 66%</button>
+                <button class="action-button" data-action="bet120">BET 120%</button>
+                <button class="action-button" data-action="bet190">BET 190%</button>
+            </div>
+            <div class="action-buttons" id="ip-turn-delay-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet30">BET 30%</button>
+                <button class="action-button" data-action="bet66">BET 66%</button>
+                <button class="action-button" data-action="bet120">BET 120%</button>
+            </div>
+             <div class="action-buttons" id="oop-turn-buttons" style="display: none;">
+                <button class="action-button" data-action="check">CHECK</button>
+                <button class="action-button" data-action="bet33">BET 33%</button>
+                <button class="action-button" data-action="bet66">BET 66%</button>
+                <button class="action-button" data-action="bet120">BET 120%</button>
+                <button class="action-button" data-action="bet230">BET 230%</button>
+            </div>
+        </div>
+        
+        <div id="reaction-buttons-container" style="display: none;">
+            <div class="reaction-buttons">
+                <button class="reaction-button" data-action="fold">FOLD</button>
+                <button class="reaction-button" data-action="call">CALL</button>
+            </div>
+        </div>
+
+        <div id="post-action-controls">
+            <div class="score-container">
+                <svg viewBox="0 0 36 36" class="score-circle-svg">
+                    <path class="score-circle-bg"
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path class="score-circle-progress" id="score-circle-progress"
+                        d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                </svg>
+                <div class="score-text" id="score-text-bg">
+                    <div class="score-label">SCORE</div>
+                    <div class="score-percentage" id="score-percentage">0%</div>
+                </div>
+            </div>
+            <div class="right-controls">
+                <div class="feedback" id="feedback"></div>
+                <div class="post-action-buttons">
+                   <button class="post-action-button" id="repeat-hand-button">⟳ REPEAT HAND</button>
+                   <button class="post-action-button next-hand" id="next-hand-button">
+                       <span class="next-hand-arrows">▶▶</span>NEXT HAND
+                   </button>
+                   <button class="post-action-button next-hand" id="proceed-to-turn-button" style="display: none;">
+                       ▶ PROCEED TO TURN
+                   </button>
+                </div>
+            </div>
+       </div>
+    </div>
+    <script>
+        // --- State Variables ---
+        let selections = {};
+        let currentSubScenario = {};
+        let rngValue = 0;
+        let myStack, opponentStack, pot;
+        let currentCards = null;
+        let currentStreet = 'flop'; 
+        let flopBetAction = null; 
+        let villainBetAmount = 0;
+        let turnStartState = { pot: 0, myStack: 0, opponentStack: 0 };
+        let allValidScenarios = [];
+
+        // --- Statistics ---
+        let totalScorePoints = 0, correctMovesCount = 0, incorrectMovesCount = 0, incorrectFrequencyCount = 0, comboStreak = 0, movesMade = 0;
+        
+        // --- Control Flags ---
+        let isRngMode = true, isRepeatingHand = false;
+
+        // --- Constants & Helpers ---
+        const suitMap = { h: { name: "hearts", symbol: "♥" }, d: { name: "diamonds", symbol: "◆" }, c: { name: "clubs", symbol: "♣" }, s: { name: "spades", symbol: "♠" }};
+        const ranks = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"];
+        const rankNames = {2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'T',11:'J',12:'Q',13:'K',14:'A'};
+        const suits = ["h", "d", "c", "s"];
+        const deck = ranks.flatMap(rank => suits.map(suit => rank + suit));
+        const rankMap = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+        const getRank = card => rankMap[card[0]];
+        const getSuit = card => card[1];
+        function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
+        
+        // --- Hand Generation (Player Hand Exclusions/Inclusions) ---
+        // Range definitions based on user input
+        const excludedOffsuitRanges = [
+            {high: 13, low: 2, endHigh: 3, endLow: 2}, // K2o~32o (K2o, Q2o, J2o, T2o, 92o, 82o, 72o, 62o, 52o, 42o, 32o) - simplified based on ranges
+            {high: 6, low: 2, endHigh: 6, endLow: 5}, // 62o~65o (62o, 63o, 64o, 65o)
+            {high: 13, low: 3, endHigh: 4, endLow: 3}, // K3o~43o (K3o, Q3o, ..., 43o)
+            {high: 13, low: 4, endHigh: 5, endLow: 4}, // K4o~54o (K4o, Q4o, ..., 54o)
+            {high: 13, low: 5, endHigh: 6, endLow: 5}, // K5o~65o (K5o, Q5o, ..., 65o)
+            {high: 13, low: 6, endHigh: 7, endLow: 6}, // K6o~76o (K6o, Q6o, ..., 76o)
+            {high: 12, low: 7, endHigh: 8, endLow: 7}  // Q7o~87o (Q7o, J7o, ..., 87o)
+        ];
+        const excludedSpecificOffsuit = [
+            {high: 12, low: 8}, // Q8o
+            {high: 11, low: 8}, // J8o
+            {high: 9, low: 8}   // 98o
+        ];
+
+        const excludedSuitedRanges = [
+            {high: 11, low: 2, endHigh: 3, endLow: 2}, // 32s~J2s (J2s, T2s, ..., 32s)
+            {high: 10, low: 3, endHigh: 4, endLow: 3}, // 43s~T3s (T3s, 93s, ..., 43s)
+            {high: 8, low: 2, endHigh: 8, endLow: 5}, // 82s~85s (82s, 83s, 84s, 85s)
+            {high: 9, low: 2, endHigh: 9, endLow: 6}, // 92s~96s (92s, 93s, 94s, 95s, 96s)
+            {high: 10, low: 5, endHigh: 10, endLow: 2}, // T5s~T2s (T5s, T4s, T3s, T2s) - this covers both T5s~T2s and T4s~T2s
+        ];
+        
+        // 3BP IP specific included hands
+        const threeBpIpIncludedHands = [];
+        // 22+ (Pocket Pairs)
+        for (let r = 2; r <= 14; r++) { // Ranks 2 through A
+            threeBpIpIncludedHands.push({rank1: r, rank2: r, suited: true}); // Pocket pairs are inherently "suited" in this context
+        }
+        // ATo+
+        for (let r = 10; r <= 14; r++) { // T, J, Q, K, A
+            threeBpIpIncludedHands.push({rank1: 14, rank2: r, suited: false}); // Ace-Ten offsuit and up
+        }
+        // A3s+
+        for (let r = 3; r <= 14; r++) { // 3, 4, ..., K, A
+            threeBpIpIncludedHands.push({rank1: 14, rank2: r, suited: true}); // Ace-Three suited and up
+        }
+        // K9s+
+        for (let r = 9; r <= 14; r++) { // 9, T, J, Q, K, A
+            if (r === 14) continue; // AKs covered by A3s+
+            threeBpIpIncludedHands.push({rank1: 13, rank2: r, suited: true}); // King-Nine suited and up (excluding AKs)
+        }
+        threeBpIpIncludedHands.push({rank1: 13, rank2: 12, suited: false}); // KQo
+        threeBpIpIncludedHands.push({rank1: 12, rank2: 10, suited: true}); // QTs
+        threeBpIpIncludedHands.push({rank1: 12, rank2: 11, suited: true}); // QJs
+
+        // Helper to check if a hand is within a given range
+        function isHandInRange(handRank1, handRank2, isSuited, rangeDef) {
+            const r1 = Math.max(handRank1, handRank2);
+            const r2 = Math.min(handRank1, handRank2);
+
+            // Special handling for pocket pairs in 'suited' check
+            if (r1 === r2) { // It's a pocket pair
+                return rangeDef.suited === true && r1 >= rangeDef.low && r1 <= rangeDef.high;
+            }
+
+            // For non-paired hands, check suited/offsuit match
+            if (isSuited !== rangeDef.suited) {
+                return false;
+            }
+
+            // Check if rank1 is within the higher rank range
+            if (r1 > rangeDef.high || r1 < rangeDef.endHigh) { // endHigh is the lower bound for the high card in range, e.g., K in K6o~76o
+                return false;
+            }
+            // Check if rank2 is within the lower rank range
+            if (r2 > rangeDef.low || r2 < rangeDef.endLow) { // endLow is the lower bound for the low card in range, e.g., 6 in K6o~76o
+                return false;
+            }
+
+            // Check if the combination (r1, r2) falls within the "diagonal" or "rectangle" implied by the range
+            // This logic assumes ranges like Kx~Tx, so all ranks from K down to T are covered with all ranks from x down to y.
+            // Simplified for now based on user's interpretation for K6o~76o etc., where both ranks can vary.
+            // A more robust check might be needed for very complex ranges like "all hands better than X".
+            return true;
+        }
+
+        // Specific helper for 'XYo~ABC' type ranges where X,Y can descend
+        function isHandInDescendingRange(handRank1, handRank2, isSuited, rangeObj) {
+            const h1 = Math.max(handRank1, handRank2);
+            const h2 = Math.min(handRank1, handRank2);
+            
+            if (isSuited !== rangeObj.suited) return false;
+
+            const startHigh = rangeObj.startHigh; // e.g., K for K6o
+            const startLow = rangeObj.startLow;   // e.g., 6 for K6o
+            const endHigh = rangeObj.endHigh;     // e.g., 7 for 76o
+            const endLow = rangeObj.endLow;       // e.g., 6 for 76o
+
+            // Check the high card range
+            if (h1 > startHigh || h1 < endHigh) return false;
+            // Check the low card range
+            if (h2 > startLow || h2 < endLow) return false;
+            
+            // Check if h1 and h2 form a valid combination within the "triangle" of the range
+            // For K6o~76o, this means (K,6), (K,5)...(K,2), (Q,6)...(Q,2) down to (7,6)...(7,2)
+            // The logic: high card must be >= endHigh and <= startHigh.
+            // The low card must be <= startLow and >= endLow.
+            // And importantly, h2 must be strictly less than h1 for non-paired hands.
+            if (h1 === h2) return false; // Exclude pairs unless specifically handled
+
+            // Simplified: if h1, h2 fall within the bounding box of the ranks, and h1 > h2
+            return h1 >= endHigh && h1 <= startHigh && h2 >= endLow && h2 <= startLow && h1 > h2;
+        }
+
+        function isHandExcluded(hand) {
+            const r1 = getRank(hand[0]);
+            const r2 = getRank(hand[1]);
+            const isSuited = getSuit(hand[0]) === getSuit(hand[1]);
+
+            // Excluded offsuit ranges (like K2o~32o)
+            const excludedOffsuitRangesSimplified = [
+                {startHigh: 13, startLow: 2, endHigh: 3, endLow: 2, suited: false}, // k2o~32o (K,Q,J,T,9,8,7,6,5,4,3 with 2)
+                {startHigh: 6, startLow: 5, endHigh: 6, endLow: 2, suited: false},  // 62o~65o (65o, 64o, 63o, 62o)
+                {startHigh: 13, startLow: 3, endHigh: 4, endLow: 3, suited: false}, // k3o~43o
+                {startHigh: 13, startLow: 4, endHigh: 5, endLow: 4, suited: false}, // k4o~54o
+                {startHigh: 13, startLow: 5, endHigh: 6, endLow: 5, suited: false}, // k5o~65o
+                {startHigh: 13, startLow: 6, endHigh: 7, endLow: 2, suited: false}, // k6o~72o (This one covers the full K6o...76o range where low card can go down to 2, as per your implied "from X to Y including lower second cards")
+                {startHigh: 12, startLow: 7, endHigh: 8, endLow: 2, suited: false}   // Q7o~82o (This covers Q7o...87o, where low card can go down to 2)
+            ];
+
+            // Specific offsuit hands
+            const excludedSpecificOffsuitSimplified = [
+                {rank1: 12, rank2: 8, suited: false}, // Q8o
+                {rank1: 11, rank2: 8, suited: false}, // J8o
+                {rank1: 9, rank2: 8, suited: false}   // 98o
+            ];
+
+            // Excluded suited ranges
+            const excludedSuitedRangesSimplified = [
+                {startHigh: 11, startLow: 2, endHigh: 3, endLow: 2, suited: true}, // 32s~J2s (J2s, T2s, 92s, 82s, 72s, 62s, 52s, 42s, 32s)
+                {startHigh: 10, startLow: 3, endHigh: 4, endLow: 3, suited: true}, // 43s~T3s (T3s, 93s, ..., 43s)
+                {startHigh: 8, startLow: 5, endHigh: 8, endLow: 2, suited: true},  // 82s~85s (85s, 84s, 83s, 82s)
+                {startHigh: 9, startLow: 6, endHigh: 9, endLow: 2, suited: true},  // 92s~96s (96s, 95s, ..., 92s)
+                {startHigh: 10, startLow: 5, endHigh: 10, endLow: 2, suited: true} // T2s~T5s (T5s, T4s, T3s, T2s)
+            ];
+
+            // Check offsuit excluded ranges
+            if (!isSuited) {
+                for (const range of excludedOffsuitRangesSimplified) {
+                    if (isHandInDescendingRange(r1, r2, isSuited, {startHigh: range.startHigh, startLow: range.startLow, endHigh: range.endHigh, endLow: range.endLow, suited: false})) {
+                        return true;
+                    }
+                }
+                // Check specific offsuit hands
+                for (const specific of excludedSpecificOffsuitSimplified) {
+                    if ( (r1 === specific.rank1 && r2 === specific.rank2) || (r1 === specific.rank2 && r2 === specific.rank1) ) {
+                        return true;
+                    }
+                }
+            } else { // Check suited excluded ranges
+                for (const range of excludedSuitedRangesSimplified) {
+                    if (isHandInDescendingRange(r1, r2, isSuited, {startHigh: range.startHigh, startLow: range.startLow, endHigh: range.endHigh, endLow: range.endLow, suited: true})) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Helper to check if a hand is in the 3BP IP allowed range
+        function isHandIn3BpIpRange(hand) {
+            const r1 = getRank(hand[0]);
+            const r2 = getRank(hand[1]);
+            const isSuited = getSuit(hand[0]) === getSuit(hand[1]);
+            const h1 = Math.max(r1, r2);
+            const h2 = Math.min(r1, r2);
+
+            for (const allowedHand of threeBpIpIncludedHands) {
+                if (h1 === allowedHand.rank1 && h2 === allowedHand.rank2 && isSuited === allowedHand.suited) {
+                    return true;
+                }
+            }
+            // Handle + ranges specifically
+            if (h1 === h2) { // Pocket pairs
+                return h1 >= 2; // 22+
+            }
+            if (!isSuited && h1 === 14 && h2 >= 10) { // ATo+
+                return true;
+            }
+            if (isSuited && h1 === 14 && h2 >= 3) { // A3s+
+                return true;
+            }
+            if (isSuited && h1 === 13 && h2 >= 9) { // K9s+ (K2s to K8s are excluded by general logic, but K9s+ is included. Check if K9s...AKs)
+                return true;
+            }
+
+            return false;
+        }
+
+
+        function getRandomCards() {
+            let heroHand = null;
+            let board = null;
+            let remainingDeck = [];
+
+            while (heroHand === null) {
+                remainingDeck = shuffle([...deck]);
+                const testHand = [remainingDeck[0], remainingDeck[1]];
+                
+                if (currentSubScenario.preflop === '3BP' && currentSubScenario.position === 'IP') {
+                    if (isHandIn3BpIpRange(testHand)) {
+                        heroHand = testHand;
+                    }
+                } else { // SRP or 3BP OOP
+                    if (!isHandExcluded(testHand)) {
+                        heroHand = testHand;
+                    }
+                }
+            }
+
+            // Once heroHand is determined, remove cards from deck and draw board
+            const finalDeck = deck.filter(card => !heroHand.includes(card));
+            const shuffledFinalDeck = shuffle(finalDeck);
+            board = shuffledFinalDeck.slice(0, 4); // 3 flop + 1 turn card
+
+            const cards = [...board.slice(0, 3), heroHand[0], heroHand[1], board[3]]; // Flop, HeroHand, Turn
+
+            const is3bp = currentSubScenario.preflop === '3BP';
+            const flopCards = cards.slice(0, 3);
+            
+            if (!is3bp) {
+                const isPaired = new Set(flopCards.map(getRank)).size < 3;
+                const isMonotone = new Set(flopCards.map(getSuit)).size === 1;
+                if (isPaired || isMonotone) {
+                     // If SRP and paired/monotone flop, regenerate everything
+                     return getRandomCards(); 
+                }
+            }
+            return cards;
+        }
+
+
+        // --- Start Screen Logic ---
+        function defineValidScenarios() {
+            // Updated valid scenarios (including OOP 3BP Turn placeholder if needed later)
+            allValidScenarios = [
+                { position: 'IP', preflop: 'SRP', spot: 'FLOP', villain: 'ALL' },
+                { position: 'OOP', preflop: 'SRP', spot: 'FLOP', villain: 'ALL' },
+                { position: 'IP', preflop: '3BP', spot: 'FLOP', villain: 'ALL' },
+                { position: 'OOP', preflop: '3BP', spot: 'FLOP', villain: 'ALL' }, // OOP 3BP FLOP should end here
+                { position: 'IP', preflop: 'SRP', spot: 'TURN', villain: 'ALL' },
+                { position: 'OOP', preflop: 'SRP', spot: 'TURN', villain: 'ALL' },
+                { position: 'IP', preflop: '3BP', spot: 'TURN', villain: 'ALL' },
+                // { position: 'OOP', preflop: '3BP', spot: 'TURN', villain: 'ALL' }, // Placeholder for future OOP 3BP Turn
+                { position: 'IP', preflop: 'SRP', spot: 'DELAY_CBET', villain: 'ALL' },
+                { position: 'OOP', preflop: 'SRP', spot: 'DELAY_CBET', villain: 'ALL' },
+            ];
+        }
+
+        function validateSelections() {
+            document.querySelectorAll('.options-row').forEach(row => {
+                const group = row.dataset.group;
+                const allButton = row.querySelector('.all-button');
+                const regularButtons = Array.from(row.querySelectorAll('.option-button:not(.all-button)'));
+                
+                // Skip validation/toggling for the disabled 'VS VILLAIN ACTION' ALL button
+                if (group === 'villain' && allButton) {
+                    allButton.disabled = true; // Ensure it stays disabled
+                    regularButtons.forEach(btn => btn.disabled = true); // Disable regular villain buttons too
+                    return; 
+                }
+
+                // Update selected state of "ALL" button based on other buttons
+                if (allButton) {
+                    const allSelected = regularButtons.every(btn => btn.classList.contains('selected'));
+                    allButton.classList.toggle('selected', allSelected);
+                }
+
+                // Determine current active selections for validation
+                const currentActiveSelections = {};
+                document.querySelectorAll('.options-row').forEach(r => {
+                    const g = r.dataset.group;
+                    const selectedBtns = Array.from(r.querySelectorAll('.option-button.selected:not(.all-button)'));
+                    if (selectedBtns.length > 0) {
+                        currentActiveSelections[g] = selectedBtns.map(btn => btn.dataset.value);
+                    } else if (r.querySelector('.all-button')?.classList.contains('selected') && g !== 'villain') { // Exclude villain ALL
+                        // If 'ALL' is selected, consider all its options as active
+                        currentActiveSelections[g] = Array.from(r.querySelectorAll('.option-button:not(.all-button)')).map(btn => btn.dataset.value);
+                    } else {
+                        currentActiveSelections[g] = []; // No selection for this group
+                    }
+                });
+
+                // Disable/enable regular buttons
+                regularButtons.forEach(button => {
+                    const testValue = button.dataset.value;
+                    let isPossible = false;
+
+                    for (const validScenario of allValidScenarios) {
+                        let match = true;
+                        for (const key in currentActiveSelections) {
+                            if (key === group) {
+                                // If testing a button, assume it's selected for this check
+                                if (validScenario[key] !== testValue) {
+                                    match = false;
+                                    break;
+                                }
+                            } else {
+                                // For other groups, check if their current active selections are compatible
+                                if (currentActiveSelections[key].length > 0 && !currentActiveSelections[key].includes(validScenario[key])) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (match) {
+                            isPossible = true;
+                            break;
+                        }
+                    }
+                    button.disabled = !isPossible;
+                });
+
+                // Disable/enable 'ALL' button if it exists (excluding villain)
+                if (allButton && group !== 'villain') {
+                    let allCanBeSelected = true;
+                    for (const rb of regularButtons) {
+                        if (rb.disabled && !rb.classList.contains('selected')) {
+                            allCanBeSelected = false;
+                            break;
+                        }
+                    }
+                    allButton.disabled = !allCanBeSelected && regularButtons.some(b => !b.classList.contains('selected'));
+                }
+            });
+        }
+
+        function handleOptionClick(event) {
+            const button = event.target;
+            const row = button.closest('.options-row');
+            const group = row.dataset.group;
+            const allButton = row.querySelector('.all-button');
+            const regularButtons = Array.from(row.querySelectorAll('.option-button:not(.all-button)'));
+
+            // If it's the disabled villain ALL button, do nothing
+            if (group === 'villain' && button.classList.contains('all-button')) {
+                return;
+            }
+
+            if (button.classList.contains('all-button')) {
+                const shouldSelectAll = !button.classList.contains('selected'); // If clicked and not currently selected, select all
+                regularButtons.forEach(btn => {
+                    btn.classList.toggle('selected', shouldSelectAll);
+                });
+                button.classList.toggle('selected', shouldSelectAll); // Sync 'ALL' button's own state
+            } else {
+                button.classList.toggle('selected');
+                // Check if all regular buttons are now selected
+                const allRegularSelected = regularButtons.every(btn => btn.classList.contains('selected'));
+                if (allButton && group !== 'villain') { // Exclude villain ALL
+                    allButton.classList.toggle('selected', allRegularSelected);
+                }
+            }
+            validateSelections();
+        }
+
+        function startTraining() {
+            selections = {};
+            document.querySelectorAll('.options-row').forEach(row => {
+                const group = row.dataset.group;
+                let values = [];
+                const allButton = row.querySelector('.all-button');
+
+                if (allButton && allButton.classList.contains('selected') && group !== 'villain') { // Exclude villain ALL
+                    values = Array.from(row.querySelectorAll('.option-button:not(.all-button)')).map(btn => btn.dataset.value);
+                } else {
+                    values = Array.from(row.querySelectorAll('.option-button.selected:not(.all-button)')).map(btn => btn.dataset.value);
+                }
+                selections[group] = values;
+            });
+
+            if (selections.position.length === 0 || selections.preflop.length === 0 || selections.spot.length === 0) {
+                alert("Please select an option for HERO POSITION, PREFLOP ACTION, and END SPOT."); return;
+            }
+            
+            movesMade = 0; totalScorePoints = 0; comboStreak = 0;
+            correctMovesCount = 0; incorrectMovesCount = 0; incorrectFrequencyCount = 0;
+            updateScore(); updateFeedbackGraphs();
+            document.getElementById('hands-played-display').textContent = '0';
+            document.getElementById('moves-made-display').textContent = '0';
+            document.getElementById("score-stat-display").textContent = '0%';
+            
+            document.getElementById('mode-display').innerHTML = `Mode: ${[selections.position.join(','), selections.preflop.join(','), selections.spot.join(',')].filter(Boolean).join(' / ')}`;
+
+            document.getElementById("start-screen").style.display = "none";
+            document.getElementById("training-screen").style.display = "block";
+            loadScenario(true); 
+        }
+
+        function goBack() {
+            document.getElementById("training-screen").style.display = "none";
+            document.getElementById("start-screen").style.display = "flex";
+            // Re-validate selections on return to start screen
+            validateSelections();
+        }
+
+        // --- Heuristic Logic ---
+        function evaluateHand(hand, board, getFullInfo = false) {
+            const allCards = [...hand, ...board];
+            const handRanks = hand.map(getRank).sort((a, b) => b - a);
+            const handSuits = hand.map(getSuit);
+            const boardRanks = board.map(getRank).sort((a, b) => b - a);
+            const boardSuits = board.map(getSuit);
+            
+            const topBoardRank = boardRanks.length > 0 ? boardRanks[0] : 0;
+            const isSuitedHand = handSuits[0] === handSuits[1];
+
+            let isBdfd = false;
+            let hasFlushBlocker = false;
+            const hasAceInHand = handRanks[0] === 14;
+
+            const boardSuitCounts = boardSuits.reduce((acc, suit) => { acc[suit] = (acc[suit] || 0) + 1; return acc; }, {});
+            
+            if (board.length === 3) {
+                if (isSuitedHand && boardSuitCounts[handSuits[0]] === 1) { isBdfd = true; }
+                const flushDrawSuitOnFlop = Object.keys(boardSuitCounts).find(s => boardSuitCounts[s] === 2);
+                if (flushDrawSuitOnFlop && handSuits.some(s => s === flushDrawSuitOnFlop)) { hasFlushBlocker = true; }
+            } else if (board.length >= 4) {
+                const boardFlushSuit = Object.keys(boardSuitCounts).find(s => boardSuitCounts[s] >= 3);
+                 if (boardFlushSuit && handSuits.some(s => s === boardFlushSuit)) { hasFlushBlocker = true; }
+            }
+
+            const allRanks = allCards.map(getRank);
+            const rankCounts = allRanks.reduce((acc, rank) => { acc[rank] = (acc[rank] || 0) + 1; return acc; }, {});
+
+            const allSuitCounts = allCards.reduce((acc, card) => { acc[getSuit(card)] = (acc[getSuit(card)] || 0) + 1; return acc; }, {});
+            const flushSuitResult = Object.keys(allSuitCounts).find(s => allSuitCounts[s] >= 5);
+            if (flushSuitResult) {
+                return { description: "Flush", rank: Math.max(...allCards.filter(c => getSuit(c) === flushSuitResult).map(getRank)), isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            }
+
+            const uniqueSortedRanks = [...new Set(allRanks)].sort((a,b)=>b-a); // Changed to descending for convenience
+            let straightRank = 0;
+            // Check for straight (5 consecutive ranks)
+            for (let i = 0; i < uniqueSortedRanks.length - 4; i++) {
+                if (uniqueSortedRanks[i] - uniqueSortedRanks[i+4] === 4) {
+                    straightRank = uniqueSortedRanks[i];
+                    break;
+                }
+            }
+            // Check for A-5 straight (Ace low)
+            if (straightRank === 0 && uniqueSortedRanks.includes(14) && uniqueSortedRanks.includes(5) && uniqueSortedRanks.includes(4) && uniqueSortedRanks.includes(3) && uniqueSortedRanks.includes(2)) {
+                straightRank = 5; // A-5 straight, A acts as 1
+            }
+            if(straightRank > 0) return { description: "Straight", rank: straightRank, isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks };
+
+            const fourOfAKind = Object.entries(rankCounts).find(([_, count]) => count === 4);
+            if (fourOfAKind) return { description: "Four of a Kind", rank: parseInt(fourOfAKind[0]), isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+
+            const trips = Object.entries(rankCounts).find(([_, count]) => count === 3);
+            const pairsForFullHouse = Object.entries(rankCounts).filter(([_, count]) => count >= 2);
+            if (trips && pairsForFullHouse.length > 1) {
+                 // Find the highest trip rank for the description
+                 const tripRank = parseInt(trips[0]);
+                 // Find the highest pair rank for the description (that's not the trip)
+                 const pairRank = Math.max(...pairsForFullHouse.filter(([r,c]) => parseInt(r) !== tripRank).map(([r,c])=>parseInt(r)));
+                 return { description: "Full House", rank: tripRank * 100 + pairRank, isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks, combined rank
+            }
+
+            if (trips) {
+                const tripRank = parseInt(trips[0]);
+                let setType = "Trips";
+                if(handRanks.filter(r => r === tripRank).length >= 2) setType = "Set";
+                return { description: setType, rank: tripRank, isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            }
+
+            const pairs = Object.entries(rankCounts).filter(([_, count]) => count === 2);
+            if (pairs.length >= 2) {
+                  const topPairRank = parseInt(pairs.sort((a,b) => b[0]-a[0])[0][0]);
+                  return { description: "Two Pair", rank: topPairRank, isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            }
+            
+            if (pairs.length === 1) {
+                const pairRank = parseInt(pairs[0][0]);
+                const kicker = Math.max(...hand.filter(c => getRank(c) !== pairRank).map(getRank), 0);
+                
+                if (handRanks[0] === handRanks[1]) { 
+                    if(handRanks[0] > topBoardRank) return { description: "Overpair", rank: handRanks[0], isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                    return { description: "Pocket Pair", rank: pairRank, topBoardRank, isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                }
+                if (pairRank === topBoardRank) {
+                    let kickerCategory = 'Weak';
+                    if (kicker >= 12) kickerCategory = 'Good'; 
+                    return { description: "Top Pair", kicker, kickerCategory, isBdfd, isSuitedHand, rank: pairRank, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                }
+                if (board.length > 1 && pairRank > boardRanks[board.length - 1] && pairRank < topBoardRank) { // Check for middle pair more robustly
+                    return { description: "Middle Pair", rank: pairRank, isBdfd, isSuitedHand, kicker, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                }
+                return { description: "Bottom Pair", rank: pairRank, isBdfd, isSuitedHand, kicker, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            }
+            
+            const suitCounts = allCards.reduce((acc, card) => { acc[getSuit(card)] = (acc[getSuit(card)] || 0) + 1; return acc; }, {});
+            const flushDrawSuit = Object.keys(suitCounts).find(s => suitCounts[s] === 4);
+            const hasFlushDraw = flushDrawSuit && hand.some(c => getSuit(c) === flushDrawSuit);
+            
+            let isOesd = false, isGutshot = false;
+            const heroAndBoardRanks = [...new Set(allRanks)].sort((a, b) => b - a); // Sorted descending for easier straight checks
+            if(heroAndBoardRanks.length >= 4) {
+                // OESD check
+                for (let i = 0; i <= heroAndBoardRanks.length - 4; i++) {
+                    const chunk = heroAndBoardRanks.slice(i, i + 4);
+                    // Check for 4 consecutive ranks with no gaps (e.g., K,Q,J,T)
+                    if (chunk[0] - chunk[3] === 3 && new Set(chunk).size === 4) {
+                        // Ensure at least one of the hand cards contributes to this potential straight
+                        if (handRanks.some(r => chunk.includes(r))) {
+                            isOesd = true;
+                            break;
+                        }
+                    }
+                }
+                // Special case for A-2-3-4 OESD (Ace as high or low)
+                if (!isOesd && heroAndBoardRanks.includes(14) && heroAndBoardRanks.includes(5) && heroAndBoardRanks.includes(4) && heroAndBoardRanks.includes(3)) { // A,5,4,3
+                    if (handRanks.includes(14) || handRanks.includes(5)) isOesd = true; // Hand has A or 5
+                }
+                if (!isOesd && heroAndBoardRanks.includes(14) && heroAndBoardRanks.includes(4) && heroAndBoardRanks.includes(3) && heroAndBoardRanks.includes(2)) { // A,4,3,2
+                    if (handRanks.includes(14) || handRanks.includes(5)) isOesd = true; // Hand has A or 5 (for 5-high straight)
+                }
+
+
+                // Gutshot check (only if no OESD)
+                if(!isOesd){
+                    for (let i = 0; i <= heroAndBoardRanks.length - 4; i++) {
+                         const chunk = heroAndBoardRanks.slice(i, i+4);
+                          // Check for 4 ranks with one gap (e.g., K,Q,T,9 needs J)
+                          if (chunk[0] - chunk[3] === 4 && new Set(chunk).size === 4) {
+                            if (handRanks.some(r => chunk.includes(r))) {
+                                 isGutshot = true;
+                                 break;
+                            }
+                          }
+                    }
+                    // Special case for A-2-3-5 gutshot (needs 4)
+                    if (!isGutshot && heroAndBoardRanks.includes(14) && heroAndBoardRanks.includes(5) && heroAndBoardRanks.includes(3) && heroAndBoardRanks.includes(2)) {
+                        if (handRanks.includes(14) || handRanks.includes(4)) isGutshot = true; // Hand has A or 4
+                    }
+                }
+            }
+            const isDraw = hasFlushDraw || isOesd || isGutshot;
+            if (isDraw) {
+                let drawDesc = [];
+                if(hasFlushDraw) drawDesc.push("FD");
+                if(isOesd) drawDesc.push("OESD");
+                if(isGutshot) drawDesc.push("Gutshot");
+                return { description: drawDesc.join('+'), isBdfd, isDraw: true, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            }
+
+            if(getFullInfo) {
+                if (handRanks[0] === 14) {
+                    const kicker = handRanks[1];
+                    let kickerCategory = 'Low';
+                    if(kicker >= 11) kickerCategory = 'Good'; 
+                    else if (kicker >= 8 && kicker <= 10) kickerCategory = 'Medium';
+                    return { description: "A-High", isBdfd, kickerCategory, kicker, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                }
+                 if (handRanks[0] === 13) { 
+                    const kicker = handRanks[1];
+                     let kickerCategory = 'Low';
+                    if(kicker >= 11) kickerCategory = 'Good'; 
+                    else if (kicker >= 9 && kicker <= 10) kickerCategory = 'Medium';
+                    return { description: "K-High", isBdfd, kickerCategory, kicker, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+                }
+            }
+            const overcards = handRanks.filter(r => r > topBoardRank);
+            if (overcards.length === 2) return { description: "Two Overcards", isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            if (overcards.length === 1) return { description: "One Overcard", isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+            
+            return { description: "Air", isBdfd, isSuitedHand, hasFlushBlocker, hasAceInHand, handRanks }; // Added handRanks
+        }
+        
+        // --- FLOP LOGIC ---
+        function get3bpoopFlopAction(hand, flop) {
+            const h = evaluateHand(hand, flop, true);
+            const flopRanks = flop.map(getRank).sort((a,b)=>b-a);
+            const topCard = flopRanks[0], secondCard = flopRanks[1], thirdCard = flopRanks[2];
+            const isTwoTone = new Set(flop.map(getSuit)).size === 2;
+            const isRainbow = new Set(flop.map(getSuit)).size === 3;
+            const isSemiConnected = (topCard - thirdCard) <= 5;
+            const isDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+
+            let correctBetSize = 'bet24';
+            let boardCategory = '기본 보드';
+            let betFreq = 0;
+
+            // Bet Sizing Logic
+            if (topCard >= 11 && isRainbow && !isSemiConnected) { // Q/J high rainbow disconnected
+                correctBetSize = 'bet50';
+                boardCategory = 'Q/J 하이 레인보우 디스커넥트';
+            } else if (topCard <= 10 && isSemiConnected) { // Low semi-connected
+                correctBetSize = 'bet70';
+                boardCategory = '로우 세미-컨넥트';
+            } else if ((topCard === 14 && isTwoTone && isSemiConnected) || (topCard === 14 && isDoubleBroadway)) { // A high two-tone semi-connect, A high d-broadway
+                correctBetSize = 'bet12';
+                boardCategory = 'A 하이 투톤/브로드웨이';
+            } else if (topCard === 13 && isRainbow) { // K high rainbow
+                correctBetSize = 'bet12';
+                boardCategory = 'K 하이 레인보우';
+            } else {
+                 correctBetSize = 'bet24';
+                 boardCategory = '기타 보드';
+            }
+
+            // Frequency Logic
+            if (boardCategory.includes('Q/J 하이') || boardCategory.includes('로우')) { // 50% or 70% pot boards
+                const isBoardTwoTone = boardCategory.includes('로우') && isTwoTone;
+                const baseFreq = isBoardTwoTone ? 52 : 59;
+                if (h.description.includes('Two Pair') || h.description.includes('Set')) { betFreq = 50; }
+                else if (h.description === 'Straight') { betFreq = 100; }
+                else if (h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 70; }
+                else if (h.description === 'Top Pair') { betFreq = 50; }
+                else if (h.description === 'Middle Pair') { betFreq = 40; }
+                else if (h.description === 'Bottom Pair') { betFreq = 30; }
+                else if (h.isDraw) { betFreq = 55; }
+                else if (h.description === 'A-High' && h.kickerCategory === 'Good') { betFreq = 70; }
+                else if (h.description === 'A-High' && h.isBdfd) { betFreq = 40; }
+                else if (h.description === 'Two Overcards' && h.isBdfd) { betFreq = 50; }
+                else if (h.description === 'Two Overcards') { betFreq = 40; }
+                else if (h.description === 'One Overcard' && h.isBdfd) { betFreq = 50; }
+                else { betFreq = 20; }
+            } else if (boardCategory.includes('A 하이') || boardCategory.includes('K 하이')) { // 12% or 24% pot boards
+                const isBoardTwoTone = boardCategory.includes('투톤');
+                const baseFreq = isBoardTwoTone ? 70 : 92;
+                if (h.description.includes('Two Pair') || h.description.includes('Set')) { betFreq = isBoardTwoTone ? 80 : 95; }
+                else if (h.description === 'Top Pair' || h.description === 'Overpair') { betFreq = isBoardTwoTone ? 90 : 100; }
+                else if (h.description === 'Middle Pair') { betFreq = isBoardTwoTone ? 70 : 80; }
+                else if (h.description.includes('Pocket') || h.description.includes('Bottom')) { betFreq = isBoardTwoTone ? 60 : 70; }
+                else if (h.isDraw) { betFreq = 80; }
+                else if (h.description === 'A-High' && h.kickerCategory === 'Good') { betFreq = isBoardTwoTone ? 80 : 90; }
+                else if (h.description === 'A-High') { betFreq = isBoardTwoTone ? 60 : 80; }
+                else if (h.isBdfd || h.isSuitedHand) { betFreq = isBoardTwoTone ? 60 : 80; }
+                else { betFreq = isBoardTwoTone ? 50 : 70; }
+            } else { // 24% default
+                betFreq = 70; // fallback default freq
+            }
+            
+            return { correctBetSize, betFreq, handCategory: h.description, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getIpSrpFlopAction(hand, flop) {
+            const h = evaluateHand(hand, flop, true);
+            const flopRanks = flop.map(getRank).sort((a, b) => b - a);
+            const isTwoTone = new Set(flop.map(getSuit)).size === 2;
+            const topCard = flopRanks[0];
+            const hasAce = flopRanks.includes(14);
+            const isDoubleBroadway = flopRanks.filter(r => r >= 12).length >= 2;
+            const isSemiConnected = (flopRanks[0] - flopRanks[2]) <= 4;
+
+            let boardCategory = '하이 레인보우/디스커넥트';
+            let correctBetSize = 'bet30';
+
+            if (isTwoTone && isDoubleBroadway) { correctBetSize = 'bet120'; boardCategory = '더블 브로드웨이 투톤'; } 
+            else if (isTwoTone && topCard >= 10 && flopRanks[1] >= 8 && isSemiConnected) { correctBetSize = 'bet120'; boardCategory = '미드-커넥트 투톤'; } 
+            else if (!isTwoTone && hasAce && isDoubleBroadway) { correctBetSize = 'bet120'; boardCategory = 'A-하이 더블 브로드웨이 레인보우'; } 
+            else if (topCard <= 10 && isSemiConnected) { correctBetSize = 'bet66'; boardCategory = '로우 세미-컨넥트'; } 
+            else if (isTwoTone && topCard >= 11 && isSemiConnected) { correctBetSize = 'bet66'; boardCategory = '하이 세미-컨넥트 투톤'; } 
+            
+            let betFreq = 50;
+            let handCategory = h.description;
+            
+            if (correctBetSize === 'bet120') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description === 'Straight') { betFreq = 90; } 
+                else if (h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 90; }
+                else if (h.description === 'Top Pair') { betFreq = 40; handCategory += ' (약한 K)'; } 
+                else if (h.description === 'Middle Pair' || h.description.includes('Pocket Pair')) { betFreq = 25; } 
+                else if (h.isDraw) { betFreq = (h.description.includes('FD')) ? 75 : 68; } 
+                else { betFreq = 20; handCategory = '에어'; }
+            } else if (correctBetSize === 'bet30') {
+                if (!isTwoTone) {
+                    if (h.description.includes('Pair') || h.isDraw || h.description.includes('Overcard')) { betFreq = 90; }
+                    else { betFreq = 60; }
+                } else { 
+                    if (h.description.includes('Two Pair') || h.description.includes('Set')) { betFreq = 90; }
+                    else if (h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 80; }
+                    else if (h.description === 'Top Pair') { betFreq = 55; }
+                    else if (h.isDraw) { betFreq = 75; }
+                    else if (h.description === 'A-High') { betFreq = (h.kickerCategory === 'Medium') ? 40 : 60; }
+                    else { betFreq = 50; }
+                }
+            } else { // bet66
+                 if (h.rank >= 10 || h.isDraw) betFreq = 75; else betFreq = 50;
+            }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getOopSrpFlopAction(hand, flop) {
+            const h = evaluateHand(hand, flop, true);
+            const flopRanks = flop.map(getRank).sort((a, b) => b - a);
+            const isTwoTone = new Set(flop.map(getSuit)).size === 2;
+            const topCard = flopRanks[0];
+            const isHighBoard = topCard >= 11;
+            const isDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+            const isSemiConnected = (flopRanks[0] - flopRanks[2]) <= 5;
+            
+            let boardCategory = '기타';
+            let correctBetSize = 'check';
+            let betFreq = 0;
+            let handCategory = h.description;
+
+            if (isHighBoard && !isTwoTone) { boardCategory = '하이 레인보우'; correctBetSize = 'bet25'; }
+            else if (isHighBoard && isTwoTone) { boardCategory = '하이 투톤'; correctBetSize = 'bet25'; }
+            else if (!isHighBoard && !isTwoTone && !isSemiConnected) { boardCategory = '로우 디스커넥트 레인보우'; correctBetSize = 'bet120'; }
+            else if (!isHighBoard && !isTwoTone) { boardCategory = '로우 세미-컨넥트 레인보우'; correctBetSize = 'bet50'; }
+            else if (isTwoTone && isDoubleBroadway) { boardCategory = '더블 브로드웨이 투톤'; correctBetSize = 'bet120'; }
+            else if (isTwoTone && topCard <= 10 && flopRanks[1] >= 8) { boardCategory = '미드-커넥트 투톤'; correctBetSize = 'bet120'; }
+            
+            if (correctBetSize === 'bet25') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description === 'Top Pair' || h.description === 'Overpair' || h.description === 'Middle Pair' || h.isDraw ) { betFreq = 80; }
+                else if (h.description.includes('Pair') || (h.description === 'A-High' && h.kickerCategory !=='Low')) { betFreq = 60; }
+                else { betFreq = 50; }
+            } 
+            else if (correctBetSize === 'bet50' || correctBetSize === 'bet120') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || (h.description === 'Top Pair' && h.kickerCategory === 'Good') || (h.description === 'Overpair' && h.rank >= 12)) { betFreq = 80; }
+                else if (h.description === 'Overpair') { betFreq = h.rank === 13 ? 60 : 40; }
+                else if (h.description === 'Top Pair') { betFreq = 50; }
+                else if (h.description === 'Middle Pair') { betFreq = 40; }
+                else if (h.description.includes('Pair')) { betFreq = 20; }
+                else if (h.isDraw) { betFreq = 60; }
+                else if (h.isBdfd && (h.description === 'A-High' || h.description === 'Two Overcards' || h.description === 'One Overcard')) { betFreq = 25; }
+                else if ((h.description === 'A-High' && h.kickerCategory === 'Good') || (h.description === 'One Overcard' && !h.isBdfd)) { betFreq = 0; }
+                else { betFreq = 20; }
+            }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function get3bpIpFlopAction(hand, flop) {
+            const h = evaluateHand(hand, flop, true);
+            const flopRanks = flop.map(getRank).sort((a, b) => b - a);
+            const isPaired = new Set(flopRanks).size < 3;
+            const isMonotone = new Set(flop.map(getSuit)).size === 1;
+            const isTwoTone = new Set(flop.map(getSuit)).size === 2;
+            const isDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+            const isTripleBroadway = flopRanks.every(r => r >= 10);
+            const topCard = flopRanks[0];
+            const secondCard = flopRanks[1];
+            
+            let correctBetSize = 'bet60';
+            let boardCategory = '로우 보드';
+
+            if (isPaired || isMonotone || isTripleBroadway || (isDoubleBroadway && topCard >= 12 && !((topCard === 12 && secondCard === 11) || (topCard === 12 && secondCard === 10)))) {
+                correctBetSize = 'bet15'; boardCategory = '하이/페어/모노톤 보드';
+            } else if ((topCard === 12 && secondCard === 11) || (topCard === 12 && secondCard === 10) || (topCard === 11 && secondCard === 10) || (topCard >= 12 && isTwoTone) ) {
+                correctBetSize = 'bet30'; boardCategory = '하이-커넥트/투톤 보드';
+            } else if (topCard === 11 && secondCard === 9) {
+                 correctBetSize = 'bet30'; boardCategory = 'J9x 커넥트 보드';
+            } else if (topCard <= 11) {
+                correctBetSize = 'bet60'; boardCategory = 'J 하이 이하 로우 보드';
+            }
+
+            let betFreq = 0;
+            let handCategory = h.description;
+            
+            if (correctBetSize === 'bet60') {
+                if (h.description === 'Set') { betFreq = 80; }
+                else if (h.description === 'Overpair' && h.rank === 14) { betFreq = 80; } 
+                else if (h.description.includes('Two Pair') || h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 100; }
+                else if (h.description === 'Top Pair') { betFreq = 60; }
+                else if (h.description === 'Middle Pair' || h.description.includes('Pocket Pair')) { betFreq = 60; }
+                else if (h.isDraw) { betFreq = 80; }
+                else if (h.description === 'A-High') { betFreq = h.kickerCategory === 'Low' ? 80 : 70; }
+                else { betFreq = 80; }
+            } else if (correctBetSize === 'bet30') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set')) { betFreq = 80; }
+                else if (h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 90; }
+                else if (h.description === 'Top Pair') { betFreq = 60; }
+                else if (h.description === 'Middle Pair') { betFreq = 60; }
+                else if (h.description.includes('Pair')) { betFreq = 80; }
+                else if (h.isDraw) { betFreq = 80; }
+                else { betFreq = 100; }
+            } else { // bet15
+                betFreq = 95;
+            }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        
+        // --- TURN LOGIC ---
+        function getIp3bpTurnAction(hand, board) { // 플랍 스몰벳 후
+            const h = evaluateHand(hand, board, true);
+            const flopRanks = board.slice(0, 3).map(getRank); // Get ranks of flop cards only
+            const turnCardRank = getRank(board[3]);
+            
+            const isBoardPaired = new Set(board.map(getRank)).size < 4; // Check if the full board is paired
+            const turnIsAce = turnCardRank === 14;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+            const uniqueSortedRanks = [...new Set(board.map(getRank))].sort((a,b)=>b-a); // Unique sorted ranks of full board
+            let is4toStraight = false;
+            for(let i=0; i<=uniqueSortedRanks.length - 4; i++){ 
+                if(uniqueSortedRanks[i] - uniqueSortedRanks[i+3] === 3 && new Set(uniqueSortedRanks.slice(i, i + 4)).size === 4) { 
+                    is4toStraight = true; break; 
+                } 
+            }
+            if (!is4toStraight && uniqueSortedRanks.includes(14) && uniqueSortedRanks.includes(5) && uniqueSortedRanks.includes(4) && uniqueSortedRanks.includes(3)) is4toStraight = true; // A,5,4,3
+            if (!is4toStraight && uniqueSortedRanks.includes(14) && uniqueSortedRanks.includes(4) && uniqueSortedRanks.includes(3) && uniqueSortedRanks.includes(2)) is4toStraight = true; // A,4,3,2
+            
+            const turnIsBlank = turnCardRank >= 2 && turnCardRank <= 7 && !is4toStraight && !isBoardPaired && !is3toFlush;
+
+            let correctBetSize = 'bet60'; // Default
+            let boardCategory = '기본 런아웃';
+
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadway)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+            if ((turnIsAce && !isBoardPaired) || is4toStraight || is3toFlush) {
+                correctBetSize = 'bet30';
+                if (turnIsAce && !isBoardPaired) boardCategory = `${baseFlopBoardDesc} + A 턴`;
+                else if (is4toStraight) boardCategory = `${baseFlopBoardDesc} + 스트레이트 완성`;
+                else boardCategory = `${baseFlopBoardDesc} + 플러시 완성`;
+            } else if (turnIsBlank) {
+                correctBetSize = 'bet80';
+                boardCategory = `${baseFlopBoardDesc} + 블랭크 런아웃`;
+            } else if (isBoardPaired) {
+                correctBetSize = 'bet80';
+                boardCategory = `${baseFlopBoardDesc} + 페어 런아웃`;
+            }
+            
+            let betFreq = 0;
+            let handCategory = h.description;
+
+            if (["Flush", "Straight", "Trips", "Four of a Kind", "Full House", "Set"].includes(h.description)) { betFreq = 100; }
+            else if (h.description === 'Two Pair') { betFreq = 80; }
+            else if (h.description === 'Top Pair' && h.kickerCategory === 'Good') { betFreq = 80; }
+            else if (h.description === 'Overpair') { betFreq = h.rank >= 12 ? 100 : 60; }
+            else if (h.description === 'Top Pair') { betFreq = 40; }
+            else if (h.description === 'Middle Pair') { betFreq = 20; }
+            else if (h.description.includes('Pocket') || h.description.includes('Bottom')) { betFreq = 40; }
+            else if (h.isDraw) { betFreq = 60; }
+            else if (h.description === 'A-High') { betFreq = h.kickerCategory === 'Good' ? (h.hasFlushBlocker ? 80 : 40) : 80; }
+            else if (h.description === 'Two Overcards') { betFreq = h.isSuitedHand ? 60 : (h.hasFlushBlocker ? 80 : 40); }
+            else { betFreq = 60; } // One Overcard / Air
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getIp3bpTurnAction_LargeBet(hand, board) { // 플랍 빅벳 후
+            const h = evaluateHand(hand, board, true);
+            const flopRanks = board.slice(0, 3).map(getRank); // Get ranks of flop cards only
+            const turnCardRank = getRank(board[3]);
+            
+            const isBoardPaired = new Set(board.map(getRank)).size < 4; // Check if the full board is paired
+            const turnIsAce = turnCardRank === 14;
+            const turnIsKing = turnCardRank === 13;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+            const hasFlushDrawOnBoard = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c === 2);
+            
+            let correctBetSize = 'bet60'; // 60% 팟 사이즈: 기본 사이즈, 대부분의 런아웃에서 사용
+            let boardCategory = '기본 런아웃 (60% 팟)';
+
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadwayFlop = flopRanks.filter(r => r >= 10).length >= 2; // Renamed to avoid confusion with current var
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadwayFlop)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+            // 30% 팟 사이즈 (사이즈 다운) 조건
+            // 텍스트의 "K 턴: 일부 보드에서 사이즈 다운 (예: 1075 턴 K는 30%, 1063 턴 K는 60%). 오프수트 K는 사이즈 다운 없음." 부분 반영
+            // 1063은 K 턴 시 사이즈 다운하지 않는 보드로 간주 (60% 유지)
+            const turnIsBlankKingFor30 = turnCardRank === 13 && !is3toFlush && !(flopRanks.includes(10) && flopRanks.includes(6) && flopRanks.includes(3)); 
+            
+            if (turnIsAce || (turnCardRank >= 9 && is3toFlush) || (turnIsKing && turnIsBlankKingFor30)) {
+                correctBetSize = 'bet30';
+                boardCategory = `${baseFlopBoardDesc} + 사이즈 다운 턴`;
+            } else if (isBoardPaired) {
+                correctBetSize = 'bet60'; // Default for paired (no explicit text, so default 60%)
+                boardCategory = `${baseFlopBoardDesc} + 페어 런아웃`;
+            } else {
+                boardCategory = `${baseFlopBoardDesc} + 일반 런아웃`;
+            }
+
+
+            let betFreq = 0;
+            let handCategory = h.description;
+            
+            // 핸드 클래스별 더블 배럴 빈도
+            if (h.description === 'Flush') { // 플러시는 80-20 (텍스트 기준)
+                betFreq = 80;
+            } else if (['Trips', 'Straight', 'Full House', 'Four of a Kind'].includes(h.description)) { // 트립스, 스트레이트, 풀하우스, 포카드: 90-10
+                betFreq = 90;
+            } else if (h.description === 'Set') { // 셋: 90-10
+                betFreq = 90;
+            } else if (h.description.includes('Two Pair')) { // 투 페어: 90-10
+                betFreq = 90;
+            } else if (h.description === 'Top Pair' && h.kickerCategory === 'Good') { // 탑 페어 굿 키커: 80-20
+                betFreq = 80;
+            } else if (h.description === 'Overpair') { // 오버 페어: 80-20 (AA는 퓨어 벳)
+                // h.handRanks[0] === h.handRanks[1]는 Pocket Pair를 의미
+                betFreq = (h.handRanks && h.handRanks[0] === 14 && h.handRanks[1] === 14) ? 100 : 80; // AA는 퓨어 벳, 그 외 오버페어는 80
+            } else if (h.description === 'Top Pair') { // 탑 페어 약한 키커: 60-40
+                betFreq = 60;
+            } else if (h.description === 'Middle Pair') { // 미들 페어: 40-60
+                betFreq = 40;
+            } else if (h.description.includes('Pocket') || h.description.includes('Bottom')) { // 로우 페어/포켓: 40-60
+                betFreq = 40;
+            } else if (h.description.includes('FD')) { // 플러시 드로우: 60-40
+                betFreq = 60;
+            } else if (h.description.includes('Gutshot')) { // 것샷 드로우: 60-40
+                betFreq = 60;
+            } else if (h.description.includes('OESD')) { // OESD 드로우: 20-80
+                betFreq = 20;
+            } else if (h.description === 'A-High') { // A 하이 (AJ~AK)
+                // 텍스트에서 'FD 블로커 있으면 60-40, 없으면 20-80'
+                betFreq = h.hasFlushBlocker ? 60 : 20;
+            } else if (h.description === 'Two Overcards') { // 투 오버카드
+                // 텍스트에서 'FD 블로커 있으면 80-20, 없으면 40-60'
+                betFreq = h.hasFlushBlocker ? 80 : 40;
+            } else if (h.description === 'One Overcard') { // 원 오버카드: 60-40
+                betFreq = 60;
+            } else { // 노 오버, 노 드로우 (에어): 60-40
+                betFreq = 60;
+            }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getIpBarrelCbetAction(hand, board) {
+            const h = evaluateHand(hand, board, true);
+            const flop = board.slice(0, 3);
+            const flopRanks = flop.map(getRank).sort((a,b)=>b-a);
+            const turnCardRank = getRank(board[3]);
+            
+            const isFlopDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+            const turnIsBlank = turnCardRank < 10 && new Set(board.map(getRank)).size === 4;
+            const boardIsPairedOnTurn = new Set(board.map(getRank)).size < 4;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+
+            let boardCategory = "IP 턴 배럴 일반";
+            let correctBetSize = "bet66";
+            
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadwayFlop = flopRanks.filter(r => r >= 10).length >= 2; // Renamed to avoid confusion with current var
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadwayFlop)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+
+            if (isFlopDoubleBroadway && turnIsBlank) { correctBetSize = "bet190"; boardCategory = `${baseFlopBoardDesc} + 더블 브로드웨이 플랍 + 블랭크 턴`; }
+            else if (boardIsPairedOnTurn || is3toFlush) { correctBetSize = "bet66"; boardCategory = `${baseFlopBoardDesc} + 상대에게 유리한 턴 (페어/플러시)`; }
+            else { correctBetSize = "bet120"; boardCategory = `${baseFlopBoardDesc} + 유리한 블랭키쉬 턴`; }
+
+            const flopRankString = flopRanks.map(r => rankNames[r]).sort().join('');
+            if (flopRankString === '288' && turnCardRank === 14) {
+                 correctBetSize = "bet120"; boardCategory = `${baseFlopBoardDesc} + 882 플랍, A 턴 (폴라라이즈드)`;
+            }
+
+            let handCategory = h.description;
+            let betFreq = 25; 
+
+            if (boardCategory.includes("882 플랍, A 턴 (폴라라이즈드)")) { // Use includes as baseFlopBoardDesc is prepended
+                 if(h.description.includes('Trips') || h.description.includes('Set')) { betFreq = 90; handCategory = '트립스 이상'; }
+                 else { betFreq = 0; }
+            } else {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips') || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 75; }
+                else if (h.isDraw) { betFreq = 50; }
+            }
+            
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: correctBetSize === 'bet120' || correctBetSize === 'bet190', dualSizeAllowed: false };
+        }
+        function getIpDelayedCbetAction(hand, board) {
+            const h = evaluateHand(hand, board, true);
+            const flopRanks = board.slice(0, 3).map(getRank); // Get ranks of flop cards only
+            const boardRanks = board.map(getRank).sort((a,b)=>b-a);
+            const turnCardRank = getRank(board[3]);
+
+            const isBoardPaired = new Set(boardRanks).size < 4;
+            const uniqueSortedRanks = [...new Set(boardRanks)].sort((a,b)=>b-a);
+            let is4toStraight = false;
+            for(let i=0; i<=uniqueSortedRanks.length - 4; i++){ if(uniqueSortedRanks[i+3] - uniqueSortedRanks[i] <= 4 && new Set(uniqueSortedRanks.slice(i, i + 4)).size === 4) { is4toStraight = true; break; } }
+            if (uniqueSortedRanks.toString().includes('2,3,4,5')) is4toStraight = true;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+            const turnIsBlank = turnCardRank < 10;
+            const isTripleBroadway = boardRanks.every(r => r >= 10);
+            
+            let correctBetSize = "bet66";
+            let dualSizeAllowed = false;
+
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadwayFlop = flopRanks.filter(r => r >= 10).length >= 2; 
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadwayFlop)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+            let boardCategory = `${baseFlopBoardDesc} + IP 딜레이 턴 일반`;
+            
+            if (isBoardPaired || is4toStraight) { correctBetSize = "bet30"; boardCategory = `${baseFlopBoardDesc} + 디폴라라이즈된 턴`; }
+            else if (isFlopDoubleBroadway) { correctBetSize = "bet230"; boardCategory = `${baseFlopBoardDesc} + 더블 브로드웨이 턴`; }
+            else if (turnIsBlank || is3toFlush) { correctBetSize = "bet66"; boardCategory = `${baseFlopBoardDesc} + 블랭크/3-플러시 턴`; }
+            else { correctBetSize = "bet120"; boardCategory = `${baseFlopBoardDesc} + 폴라라이즈된 턴`; }
+
+            let handCategory = h.description;
+            let betFreq = 0;
+
+            if (correctBetSize === 'bet30') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips') || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 75; }
+                else if (h.description === 'Top Pair') { betFreq = 50; }
+                else if (h.isDraw) { betFreq = 50; }
+                else if (h.description === 'Middle Pair') { betFreq = 40; }
+                else { betFreq = 40; }
+            } else if (correctBetSize === 'bet66') {
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips') || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = 75; }
+                else if (h.description === 'A-High' && h.kickerCategory === 'Good') { betFreq = 0; handCategory = "A-하이 (하이키커)"; }
+                else if (h.description === 'Top Pair') { betFreq = 35; }
+                else if (h.isDraw) { betFreq = 40; }
+                else if (h.description === 'A-High') { betFreq = 50; }
+                else { betFreq = 25; }
+            } else { // bet120
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips')) { betFreq = 75; }
+                else { betFreq = 0; }
+            }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getOopTurnBarrelAction(hand, board) {
+            const h = evaluateHand(hand, board, true);
+            const flopRanks = board.slice(0, 3).map(getRank); // Get ranks of flop cards only
+            const boardRanks = board.map(getRank).sort((a,b)=>b-a);
+            const turnCardRank = getRank(board[3]);
+            
+            const isBoardPaired = new Set(boardRanks).size < 4;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+            
+            let correctBetSize = 'bet66';
+            let betFreq = 0;
+            let handCategory = h.description;
+            
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadwayFlop = flopRanks.filter(r => r >= 10).length >= 2; 
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadwayFlop)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+            let boardCategory = `${baseFlopBoardDesc} + OOP 턴 배럴 일반`;
+
+            if (isBoardPaired) { boardCategory = `${baseFlopBoardDesc} + 디폴라라이징 턴`; correctBetSize = 'bet33'; }
+            else if (is3toFlush) { boardCategory = `${baseFlopBoardDesc} + 플러시 완성 턴`; correctBetSize = 'bet33'; }
+            else { correctBetSize = 'bet66'; }
+
+            if (isBoardPaired && h.description === 'Middle Pair') {
+                boardCategory = `${baseFlopBoardDesc} + 페어 보드 (미들페어 예외)`; correctBetSize = 'bet66'; betFreq = 100;
+            } else {
+                if (h.description === 'Set') { handCategory='셋'; betFreq = 50; }
+                else if (h.description === 'Two Pair') { handCategory='투 페어'; betFreq = 60; }
+                else if (h.description === 'Top Pair' && h.kickerCategory === 'Good') { handCategory='탑 페어 (굿 키커)'; betFreq = 75; }
+                else if (h.description === 'Top Pair') { handCategory='탑 페어 (약한 키커)'; betFreq = 50; }
+                else if (h.isDraw && h.hasAceInHand) { handCategory = 'A 하이 드로우'; betFreq = 60; }
+                else if (h.isDraw) { handCategory = 'A 하이 아닌 드로우'; betFreq = 80; }
+                else if (h.description === 'Air' && !h.isSuitedHand && h.hasFlushBlocker) { handCategory = '에어 (FD 블로커)'; betFreq = 15; }
+                else { betFreq = 0; }
+            }
+            
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed: false };
+        }
+        function getOopDelayedCbetAction(hand, board) {
+            const h = evaluateHand(hand, board, true);
+            const flopRanks = board.slice(0, 3).map(getRank); // Get ranks of flop cards only
+            const boardRanks = board.map(getRank).sort((a, b) => a - b);
+            const turnCardRank = getRank(board[3]);
+
+            const isBoardPaired = new Set(boardRanks).size < 4;
+            const uniqueSortedRanks = [...new Set(boardRanks)].sort((a,b)=>a-b);
+            let is4toStraight = false;
+            for(let i=0; i<=uniqueSortedRanks.length - 4; i++){ if(uniqueSortedRanks[i+3] - uniqueSortedRanks[i] <= 4 && new Set(uniqueSortedRanks.slice(i, i + 4)).size === 4) { is4toStraight = true; break; } }
+            if (uniqueSortedRanks.toString().includes('2,3,4,5')) is4toStraight = true;
+            const isFlopDoubleBroadway = flopRanks.filter(r => r >= 10).length >= 2;
+            const is3toFlush = Object.values(board.map(getSuit).reduce((acc, s) => { acc[s] = (acc[s] || 0) + 1; return acc; }, {})).some(c => c >= 3);
+
+            let correctBetSize = 'bet66';
+            let dualSizeAllowed = false;
+            
+            // Determine board text before turn
+            const flopTopCard = flopRanks[0], flopSecondCard = flopRanks[1], flopThirdCard = flopRanks[2];
+            const isFlopTwoTone = new Set(board.slice(0,3).map(getSuit)).size === 2;
+            const isFlopRainbow = new Set(board.slice(0,3).map(getSuit)).size === 3;
+            const isFlopSemiConnected = (flopTopCard - flopThirdCard) <= 5;
+            const isFlopDoubleBroadwayFlop = flopRanks.filter(r => r >= 10).length >= 2; 
+            
+            let baseFlopBoardDesc = "";
+            if (flopTopCard >= 11 && isFlopRainbow && !isFlopSemiConnected) { baseFlopBoardDesc = 'Q/J 하이 레인보우 디스커넥트'; } 
+            else if (flopTopCard <= 10 && isFlopSemiConnected) { baseFlopBoardDesc = '로우 세미-컨넥트'; } 
+            else if ((flopTopCard === 14 && isFlopTwoTone && isFlopSemiConnected) || (flopTopCard === 14 && isFlopDoubleBroadwayFlop)) { baseFlopBoardDesc = 'A 하이 투톤/브로드웨이'; } 
+            else if (flopTopCard === 13 && isFlopRainbow) { baseFlopBoardDesc = 'K 하이 레인보우'; } 
+            else if (isFlopTwoTone) { baseFlopBoardDesc = '투톤'; }
+            else { baseFlopBoardDesc = '레인보우'; }
+
+            let boardCategory = `${baseFlopBoardDesc} + OOP 딜레이 턴 일반`;
+            
+            if (isBoardPaired || is4toStraight) { correctBetSize = 'bet30'; boardCategory = `${baseFlopBoardDesc} + 디폴라라이즈된 턴`; }
+            else if (isFlopDoubleBroadway) { correctBetSize = 'bet230'; boardCategory = `${baseFlopBoardDesc} + 더블 브로드웨이 턴`; }
+            else if (is3toFlush) { correctBetSize = 'bet66'; boardCategory = `${baseFlopBoardDesc} + 3-플러시 턴`; }
+            else { 
+                correctBetSize = 'bet66'; 
+                boardCategory = `${baseFlopBoardDesc} + 나머지 런아웃`;
+                if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips')) {
+                    dualSizeAllowed = true;
+                }
+            }
+
+            let handCategory = h.description;
+            let betFreq = 0;
+
+            if (h.description.includes('Two Pair') || h.description.includes('Set') || h.description.includes('Trips')) { betFreq = 50; }
+            else if (h.description === 'Overpair' || (h.description === 'Top Pair' && h.kickerCategory === 'Good')) { betFreq = h.hasAceInHand ? 42 : 60; }
+            else if (h.description === 'Top Pair') { betFreq = 40; }
+            else if (h.description === 'Middle Pair') { betFreq = 20; }
+            else if (h.isDraw && h.hasAceInHand) { betFreq = 20; handCategory = 'A 하이 드로우'; }
+            else if (h.isDraw) { betFreq = 60; handCategory = 'A 하이 아닌 드로우'; }
+            else if (!h.isSuitedHand && h.hasFlushBlocker) { betFreq = 20; handCategory = '에어 (FD 블로커)'; }
+            else { betFreq = 0; }
+
+            return { correctBetSize, betFreq, handCategory, boardCategory, isOverbetSituation: false, dualSizeAllowed };
+        }
+
+        // --- ROUTER function for all actions ---
+        function getCorrectAction(street, subScenario, hand, board, flopAction) {
+            const { position, preflop } = subScenario;
+
+            if (street === 'flop') {
+                if (preflop === 'SRP') {
+                    return position === 'IP' ? getIpSrpFlopAction(hand, board) : getOopSrpFlopAction(hand, board);
+                } else { // 3BP
+                    return position === 'IP' ? get3bpIpFlopAction(hand, board) : get3bpoopFlopAction(hand, board);
+                }
+            } else { // turn
+                if (preflop === '3BP') {
+                    if (position === 'IP') { 
+                        // --- MODIFIED: IP 3BP After Flop 15% Bet to use 30% Bet logic ---
+                        if (flopAction === 'bet15' || flopAction === 'bet30') {
+                            return getIp3bpTurnAction(hand, board); // Small flop bet logic
+                        } else { // FlopAction 'bet60'
+                            return getIp3bpTurnAction_LargeBet(hand, board);
+                        }
+                    } else { // OOP 3BP Turn - No specific heuristic yet, treat as end of hand
+                         // Will fall through to a default behavior if not explicitly handled
+                         // The showStreetFeedback will handle 'next hand' automatically as proceedToTurn will be disabled
+                         return { correctBetSize: 'check', betFreq: 100, handCategory: 'N/A', boardCategory: 'N/A', isOverbetSituation: false, dualSizeAllowed: false }; // Dummy data
+                    }
+                } else { // SRP
+                     if (position === 'OOP') {
+                        return flopAction === 'check' ? getOopDelayedCbetAction(hand, board) : getOopTurnBarrelAction(hand, board);
+                    } else { // IP
+                        return flopAction === 'check' ? getIpDelayedCbetAction(hand, board) : getIpBarrelCbetAction(hand, board);
+                    }
+                }
+            }
+        }
+
+        function restartTurnDecision() {
+            pot = turnStartState.pot;
+            myStack = turnStartState.myStack;
+            opponentStack = turnStartState.opponentStack;
+            updateStackAndPotDisplays();
+
+            document.getElementById('post-action-controls').style.display = 'none';
+            document.querySelectorAll('.action-button').forEach(b => b.disabled = false);
+            
+            showCorrectButtonSet(currentStreet, currentSubScenario, flopBetAction);
+            
+            document.getElementById('bet-indicator-btn').style.display = 'none';
+            document.getElementById('bet-indicator-bb').style.display = 'none';
+        }
+
+        // --- UI Control Functions ---
+        function showCorrectButtonSet(street, subScenario, flopAction) {
+            const { position, preflop } = subScenario;
+            document.querySelector('.action-buttons-container').style.display = 'block';
+            document.querySelectorAll('.action-buttons').forEach(el => el.style.display = 'none');
+
+            let idToShow;
+            if (street === 'flop') {
+                if(preflop === '3BP') {
+                    idToShow = position === 'IP' ? 'ip-3bp-flop-buttons' : 'oop-3bp-flop-buttons';
+                } else {
+                    idToShow = position === 'IP' ? 'ip-srp-flop-buttons' : 'oop-srp-flop-buttons';
+                }
+            } else { // turn
+                if (preflop === '3BP') {
+                    // Ensure correct 3BP IP Turn buttons are shown based on small/large flop bet (15/30% vs 60%)
+                    idToShow = (flopAction === 'bet15' || flopAction === 'bet30') ? 'ip-3bp-turn-small-flop-bet-buttons' : 'ip-3bp-turn-large-flop-bet-buttons';
+                } else { // SRP
+                    if (position === 'OOP') {
+                        idToShow = 'oop-turn-buttons';
+                    } else { // IP
+                        idToShow = (flopAction === 'check') ? 'ip-turn-delay-buttons' : 'ip-turn-barrel-buttons';
+                    }
+                }
+            }
+            if(document.getElementById(idToShow)) {
+                document.getElementById(idToShow).style.display = 'flex';
+            }
+        }
+        
+        // --- Core Gameplay Loop ---
+        let scenarioQueue = []; // To manage the sequence of FLOP -> TURN
+
+        function loadScenario(isNewHand) {
+            isRepeatingHand = !isNewHand;
+            
+            // 1. Determine the sub-scenario for this hand
+            if (isNewHand) {
+                currentStreet = 'flop'; // Always reset to flop for a new hand
+                scenarioQueue = []; // Clear queue for a new hand
+
+                const availableSpots = selections.spot;
+                
+                // --- MODIFIED: OOP / 3BP / FLOP 시나리오에서 턴으로 넘어가지 않고 플랍만 플레이 ---
+                // If FLOP is selected AND it's OOP 3BP, only allow FLOP spot (no proceeding to Turn)
+                if (selections.spot.includes('FLOP') && selections.position.includes('OOP') && selections.preflop.includes('3BP')) {
+                    const flopScenarios = allValidScenarios.filter(scen => 
+                        selections.position.includes(scen.position) &&
+                        selections.preflop.includes(scen.preflop) &&
+                        scen.spot === 'FLOP' // Only allow FLOP
+                    );
+                    if (flopScenarios.length > 0) {
+                        scenarioQueue.push(flopScenarios[Math.floor(Math.random() * flopScenarios.length)]);
+                    }
+                } else {
+                    // If FLOP is selected (and not OOP 3BP), add it first
+                    if (availableSpots.includes('FLOP')) {
+                        const flopScenarios = allValidScenarios.filter(scen => 
+                            selections.position.includes(scen.position) &&
+                            selections.preflop.includes(scen.preflop) &&
+                            scen.spot === 'FLOP'
+                        );
+                        if (flopScenarios.length > 0) {
+                            scenarioQueue.push(flopScenarios[Math.floor(Math.random() * flopScenarios.length)]);
+                        }
+                    }
+
+                    // If TURN is selected, add it to the queue (will be picked after FLOP if FLOP exists)
+                    if (availableSpots.includes('TURN')) {
+                        const turnScenarios = allValidScenarios.filter(scen => 
+                            selections.position.includes(scen.position) &&
+                            selections.preflop.includes(scen.preflop) &&
+                            scen.spot === 'TURN'
+                        );
+                        if (turnScenarios.length > 0) {
+                            scenarioQueue.push(turnScenarios[Math.floor(Math.random() * turnScenarios.length)]);
+                        }
+                    }
+
+                    // If DELAY_CBET is selected, add it to the queue (will be picked after FLOP if FLOP exists)
+                    if (availableSpots.includes('DELAY_CBET')) {
+                         const delayScenarios = allValidScenarios.filter(scen => 
+                            selections.position.includes(scen.position) &&
+                            selections.preflop.includes(scen.preflop) &&
+                            scen.spot === 'DELAY_CBET'
+                        );
+                        if (delayScenarios.length > 0) {
+                            scenarioQueue.push(delayScenarios[Math.floor(Math.random() * delayScenarios.length)]);
+                        }
+                    }
+                }
+
+
+                if (scenarioQueue.length === 0) {
+                    alert("No valid scenarios found for your selection. Please adjust your filters.");
+                    goBack(); // Go back to start screen if no scenarios are found
+                    return;
+                }
+
+                // Set the current sub scenario to the first in the queue (which should be FLOP if selected)
+                currentSubScenario = scenarioQueue.shift(); // Get the first scenario
+            }
+            
+            // 2. Hide/show on-table context display
+            const onTableContext = document.getElementById('on-table-context-display');
+            // Show "Now:" message always if multiple modes are selected, or specific single mode chosen
+            const isSingleSelectionMode = selections.position.length === 1 && selections.preflop.length === 1 && selections.spot.length === 1;
+
+            if (!isSingleSelectionMode || (selections.position.includes('ALL') || selections.preflop.includes('ALL') || selections.spot.includes('ALL')) ) {
+                onTableContext.textContent = `Now: ${currentSubScenario.position} / ${currentSubScenario.preflop} / ${currentSubScenario.spot}`;
+                onTableContext.style.display = 'block';
+            } else {
+                onTableContext.style.display = 'none';
+            }
+
+            // 3. Reset UI
+            document.getElementById('post-action-controls').style.display = 'none';
+            document.querySelector('.action-buttons-container').style.display = 'none';
+            document.querySelectorAll('.action-button, .reaction-button').forEach(b => b.disabled = false);
+            document.getElementById('bet-indicator-btn').style.display = 'none';
+            document.getElementById('bet-indicator-bb').style.display = 'none';
+
+            if (isNewHand) {
+                currentCards = getRandomCards();
+                document.getElementById('hands-played-display').textContent = parseInt(document.getElementById('hands-played-display').textContent) + 1;
+            }
+
+            const is3bp = currentSubScenario.preflop === '3BP';
+            const initialPot = is3bp ? 20.5 : 6.5;
+            const initialStack = is3bp ? 90 : 97;
+            pot = initialPot;
+            myStack = initialStack;
+            opponentStack = initialStack;
+            
+            villainBetAmount = 0;
+            flopBetAction = null; 
+
+            const handCards = [currentCards[3], currentCards[4]];
+            const flopCards = currentCards.slice(0, 3);
+            [document.getElementById("hero-card1"), document.getElementById("hero-card2")].forEach((card, i) => { const suitInfo = suitMap[getSuit(handCards[i])]; card.setAttribute("data-suit", suitInfo.name); card.setAttribute("data-suit-symbol", suitInfo.symbol); card.setAttribute("data-rank", handCards[i][0]); });
+            [document.getElementById("flop1"), document.getElementById("flop2"), document.getElementById("flop3")].forEach((card, i) => { const suitInfo = suitMap[getSuit(flopCards[i])]; card.setAttribute("data-suit", suitInfo.name); card.setAttribute("data-suit-symbol", suitInfo.symbol); card.setAttribute("data-rank", flopCards[i][0]); });
+            
+            rngValue = Math.floor(Math.random() * 100) + 1;
+            document.getElementById("rng-value").textContent = rngValue;
+            
+            const isOopMode = currentSubScenario.position === 'OOP';
+            const posBtnEl = document.getElementById("pos-btn"), posBbEl = document.getElementById("pos-bb");
+            posBtnEl.classList.toggle("my-position", !isOopMode);
+            posBtnEl.classList.toggle("opponent-position", isOopMode);
+            posBbEl.classList.toggle("my-position", isOopMode);
+            posBbEl.classList.toggle("opponent-position", !isOopMode);
+            document.getElementById("hero-card1").style.cssText = isOopMode ? "top: 251px; left: 433px;" : "top: -30px; left: 431px;";
+            document.getElementById("hero-card2").style.cssText = isOopMode ? "top: 251px; left: 475px;" : "top: -30px; left: 473px;";
+            
+            updateComboStreak();
+            
+            document.getElementById('turn').style.display = 'none';
+            // --- MODIFIED: Adjust position of the on-table-context-display block ---
+            onTableContext.style.top = '175px'; // Adjusted to visually lower the entire block
+
+            // --- MODIFIED: Determine starting street based on currentSubScenario.spot and set flopBetAction for Turn ---
+            if (currentSubScenario.spot === 'TURN' || currentSubScenario.spot === 'DELAY_CBET') { 
+                if (currentSubScenario.spot === 'DELAY_CBET') {
+                    flopBetAction = 'check'; 
+                } else {
+                    if (currentSubScenario.preflop === '3BP') { // 3BP Turn: simulate 30% or 60% flop bet
+                         flopBetAction = Math.random() > 0.5 ? 'bet30' : 'bet60'; 
+                    } else { // SRP Turn: simulate 30% or 66% flop bet
+                        flopBetAction = Math.random() > 0.5 ? 'bet30' : 'bet66'; 
+                    }
+                    const flopBet = getBetAmount(flopBetAction, initialPot); 
+                    pot = initialPot + flopBet * 2; 
+                    myStack = initialStack - flopBet; 
+                    opponentStack = initialStack - flopBet; 
+                }
+                
+                // Set context for Turn
+                onTableContext.textContent = `Now: ${currentSubScenario.position} / ${currentSubScenario.preflop} / ${currentSubScenario.spot}`;
+                // --- MODIFIED: Add Flop Bet % ONLY for IP 3BP Turn, with specific styling ---
+                if (currentSubScenario.position === 'IP' && currentSubScenario.preflop === '3BP') {
+                     // Using line-height:1 on the parent and margin-top on the div ensures specific spacing
+                     onTableContext.innerHTML += `<div style="font-size: 10px; color: #999; margin-top: 5px;">After Flop ${flopBetAction.replace('bet', '')}% Bet</div>`; // Default 5px margin-top for closer line spacing
+                }
+                onTableContext.style.display = 'block'; 
+                // onTableContext.style.bottom = '85px'; Removed as now using 'top'
+                proceedToTurn(false); 
+            } else { 
+                 currentStreet = 'flop'; 
+                 showCorrectButtonSet(currentStreet, currentSubScenario, null); 
+                 
+                 // --- MODIFIED: Control proceed-to-turn button based on scenarioQueue and OOP 3BP FLOP ---
+                 // If current scenario is FLOP and there are more scenarios in queue (TURN or DELAY_CBET)
+                 // AND it's NOT OOP 3BP FLOP (which should terminate at flop)
+                 if (currentSubScenario.spot === 'FLOP' && scenarioQueue.length > 0 && !(currentSubScenario.position === 'OOP' && currentSubScenario.preflop === '3BP')) {
+                     document.getElementById('proceed-to-turn-button').style.display = 'inline-block'; 
+                     document.getElementById('next-hand-button').style.display = 'none'; 
+                 } else { // No more streets to proceed to, or started on Turn directly, or it's OOP 3BP FLOP
+                     document.getElementById('proceed-to-turn-button').style.display = 'none'; 
+                     document.getElementById('next-hand-button').style.display = 'inline-block'; 
+                 }
+            }
+            
+            updateStackAndPotDisplays();
+        }
+
+        function displayTurnCard() {
+             const turnCard = currentCards[5];
+            const turnEl = document.getElementById('turn');
+            const suitInfo = suitMap[getSuit(turnCard)];
+            turnEl.setAttribute("data-suit", suitInfo.name);
+            turnEl.setAttribute("data-suit-symbol", suitInfo.symbol);
+            turnEl.setAttribute("data-rank", turnCard[0]);
+            turnEl.style.display = 'block';
+        }
+
+        function proceedToTurn(fromFlopAction = true) { 
+            currentStreet = 'turn'; 
+            displayTurnCard(); 
+            
+            turnStartState = { pot, myStack, opponentStack }; 
+
+            // Get next scenario from queue if proceeding from flop
+            if (fromFlopAction && scenarioQueue.length > 0) {
+                currentSubScenario = scenarioQueue.shift(); 
+            } 
+            
+            // Update on-table context for Turn
+            const onTableContext = document.getElementById('on-table-context-display');
+            onTableContext.textContent = `Now: ${currentSubScenario.position} / ${currentSubScenario.preflop} / ${currentSubScenario.spot}`;
+            // --- MODIFIED: Add Flop Bet % to Turn context ONLY for IP 3BP Turn, with specific styling ---
+            if (currentSubScenario.position === 'IP' && currentSubScenario.preflop === '3BP' && flopBetAction) { 
+                 onTableContext.innerHTML += `<div style="font-size: 10px; color: #999; margin-top: 5px;">After Flop ${flopBetAction.replace('bet', '')}% Bet</div>`; // margin-top: 5px
+            }
+            onTableContext.style.display = 'block';
+
+            restartTurnDecision(); 
+            rngValue = Math.floor(Math.random() * 100) + 1; 
+            document.getElementById("rng-value").textContent = rngValue; 
+
+            document.getElementById('proceed-to-turn-button').style.display = 'none'; 
+            document.getElementById('next-hand-button').style.display = 'inline-block'; 
+        }
+
+        function updateStatsAndScore(resultType) {
+            if (isRepeatingHand) return;
+            
+            movesMade++;
+            document.getElementById('moves-made-display').textContent = movesMade;
+
+            if (resultType === 'CORRECT') { 
+                totalScorePoints += 1; correctMovesCount++; comboStreak++; 
+            } else if (resultType === 'INCORRECT_FREQUENCY') {
+                totalScorePoints += 0.5;
+                comboStreak = 0; incorrectFrequencyCount++;
+            } else { 
+                comboStreak = 0; incorrectMovesCount++;
+            }
+            
+            updateScore(); 
+            updateComboStreak();
+            updateFeedbackGraphs();
+        }
+        
+        function showStreetFeedback(resultType, scenario) {
+            document.querySelector('.action-buttons-container').style.display = 'none';
+            document.getElementById('reaction-buttons-container').style.display = 'none';
+            document.getElementById("post-action-controls").style.display = "flex";
+            
+            let explanationHTML;
+            
+            const { betFreq, handCategory, boardCategory, correctBetSize, isOverbetSituation, dualSizeAllowed } = scenario;
+            
+            const formatBetSizeForDisplay = (action) => {
+                if (!action || action === 'check') return 'Check';
+                const sizeMap = {'bet12':'12%', 'bet15':'15%','bet24':'24%','bet25':'25%','bet30':'30%','bet33':'33%','bet50':'50%','bet60':'60%','bet66':'66%','bet70':'70%','bet80':'80%','bet120':'120%','bet190':'190%','bet200':'200%','bet230':'230%'};
+                return sizeMap[action] || 'Bet';
+            }
+
+            let boardBetSize = formatBetSizeForDisplay(correctBetSize);
+            
+            let heuristicText;
+            // --- MODIFIED: Don't show frequency error message if RNG is off and size is correct ---
+            if (!isRngMode && resultType === 'CORRECT') {
+                 heuristicText = `<span style="color: #23d96d; font-weight: bold;">RNG Off (Size Correct)</span>`;
+            } else if (betFreq === 100) { heuristicText = `<span style="color: red; font-weight: bold;">Pure Bet</span>`; }
+            else if (betFreq === 0) { heuristicText = `<span style="color: #23d96d; font-weight: bold;">Pure Check</span>`; }
+            else { heuristicText = `Bet ${betFreq}% / Check ${100 - betFreq}%`; }
+
+            if (resultType === 'INCORRECT_FREQUENCY') { heuristicText = `<span style="color: orange; font-weight: bold;">${heuristicText}</span>`; }
+            
+            let sizeText = (resultType === 'INCORRECT_SIZE') ? ` | Your choice: <span style="color:#f05650;">${formatBetSizeForDisplay(window.lastPlayerAction)}</span>` : '';
+            explanationHTML = `
+            <div style="color:#aaa; font-size:16px; font-weight:normal; text-align: left; line-height: 1.5;">
+                 <div>Board: ${boardCategory || 'N/A'} | Correct Size: <span style="color: #ccc;">${boardBetSize}</span>${sizeText}</div>
+                 <div>Hand: ${handCategory || 'N/A'} &nbsp;&nbsp; | &nbsp;&nbsp; ${heuristicText}</div>
+            </div>`;
+            
+            const feedbackEl = document.getElementById("feedback");
+            if (resultType === 'CORRECT') {
+                feedbackEl.innerHTML = `<span style="color:#23d96d;">✔ CORRECT MOVE</span><br>${explanationHTML}`;
+            } else if (resultType === 'INCORRECT_SIZE') {
+                feedbackEl.innerHTML = `<div style="color: #f05650; font-weight: bold; opacity: 0.92;">✖ WRONG SIZE</div>${explanationHTML}`;
+            } else if (resultType === 'INCORRECT_FREQUENCY') {
+                // --- MODIFIED: Customize frequency error message when RNG is off ---
+                if (!isRngMode) {
+                   feedbackEl.innerHTML = `<div style="color: #f05650; font-weight: bold; opacity: 0.92;">✖ WRONG ACTION!</div><div style="font-size: 14px; color: #aaa; margin-top: -4px;">(RNG Off Mode: This action does not match the heuristic strategy)</div>${explanationHTML}`;
+                } else {
+                    let freqMsg = `(RNG ${rngValue}: Should have ${(rngValue <= scenario.betFreq) ? 'bet' : 'checked'})`;
+                    feedbackEl.innerHTML = `<div style="color: orange; font-weight: bold; opacity: 0.9;">✖ INCORRECT FREQUENCY!</div><div style="font-size: 14px; color: #aaa; margin-top: -4px;">${freqMsg}</div>${explanationHTML}`;
+                }
+            }
+
+            // --- MODIFIED: Control proceed-to-turn button based on flop accuracy ---
+            const canProceedToTurn = currentStreet === 'flop' && 
+                                     (selections.spot.includes('TURN') || selections.spot.includes('DELAY_CBET')) && 
+                                     !(currentSubScenario.position === 'OOP' && currentSubScenario.preflop === '3BP' && currentSubScenario.spot === 'FLOP') &&
+                                     (resultType === 'CORRECT' || (resultType === 'INCORRECT_FREQUENCY' && !isRngMode)); // Allow if size is correct, even if freq is off in RNG-off mode
+
+            document.getElementById('next-hand-button').style.display = canProceedToTurn ? 'none' : 'inline-block';
+            document.getElementById('proceed-to-turn-button').style.display = canProceedToTurn ? 'inline-block' : 'none';
+
+            // Special case for OOP 3BP FLOP (always ends at flop)
+            if (currentSubScenario.position === 'OOP' && currentSubScenario.preflop === '3BP' && currentSubScenario.spot === 'FLOP') {
+                document.getElementById('proceed-to-turn-button').style.display = 'none';
+                document.getElementById('next-hand-button').style.display = 'inline-block';
+            }
+        }
+
+        function getBetAmount(action, currentPot) {
+             let betMultiplier = 0;
+             const sizeMap = {'bet12':0.12, 'bet15':0.15, 'bet24':0.24,'bet25':0.25,'bet30':0.30,'bet33':0.33,'bet50':0.50,'bet60':0.60, 'bet66':0.66, 'bet70':0.70, 'bet80':0.80, 'bet120':1.2,'bet190':1.9,'bet200':2.0,'bet230':2.3};
+             betMultiplier = sizeMap[action] || 0;
+             return currentPot * betMultiplier;
+        }
+
+        function selectAction(action) {
+            window.lastPlayerAction = action;
+            document.querySelectorAll('.action-button').forEach(b => b.disabled = true);
+            
+            if (currentStreet === 'flop') {
+                flopBetAction = action;
+            }
+
+            const hand = [currentCards[3], currentCards[4]];
+            const board = currentStreet === 'flop' ? currentCards.slice(0, 3) : currentCards.slice(0, 3).concat(currentCards[5]);
+            
+            const scenario = getCorrectAction(currentStreet, currentSubScenario, hand, board, flopBetAction);
+            
+            const { correctBetSize, betFreq } = scenario;
+            let resultType;
+
+            // --- MODIFIED: Handle RNG off mode for frequency decision ---
+            if (isRngMode) {
+                const shouldBet = rngValue <= betFreq;
+                if (action === 'check') {
+                    resultType = shouldBet ? 'INCORRECT_FREQUENCY' : 'CORRECT';
+                } else {
+                    resultType = (action === correctBetSize) ? (shouldBet ? 'CORRECT' : 'INCORRECT_FREQUENCY') : 'INCORRECT_SIZE';
+                }
+            } else { // RNG is off
+                if (action === 'check') {
+                    // If betFreq is 0 (pure check), it's CORRECT.
+                    // Otherwise (betFreq > 0, should bet some % or pure bet), it's INCORRECT_FREQUENCY (wrong action type)
+                    resultType = (betFreq === 0) ? 'CORRECT' : 'INCORRECT_FREQUENCY';
+                } else { // Player bets
+                    if (action === correctBetSize) {
+                        // If size is correct:
+                        // If betFreq is > 0 (should bet some % or pure bet), it's CORRECT.
+                        // If betFreq is 0 (pure check), it's INCORRECT_FREQUENCY (wrong action type)
+                        resultType = (betFreq > 0) ? 'CORRECT' : 'INCORRECT_FREQUENCY';
+                    } else {
+                        // Size is incorrect, regardless of frequency
+                        resultType = 'INCORRECT_SIZE';
+                    }
+                }
+            }
+
+            updateStatsAndScore(resultType);
+            
+            if (action !== 'check') {
+                const betAmount = getBetAmount(action, pot);
+                const playerBetIndicator = document.querySelector('.my-position .bet-indicator');
+                playerBetIndicator.querySelector('.bet-chip-text').textContent = betAmount.toFixed(1);
+                playerBetIndicator.style.display = 'flex';
+                playerBetIndicator.classList.add('animate-bet');
+                
+                setTimeout(() => {
+                    const opponentBetIndicator = document.querySelector('.opponent-position .bet-indicator');
+                    opponentBetIndicator.querySelector('.bet-chip-text').textContent = betAmount.toFixed(1);
+                    opponentBetIndicator.querySelector('.bet-size-text').textContent = 'Call';
+                    opponentBetIndicator.style.display = 'flex';
+                    opponentBetIndicator.classList.add('animate-bet');
+                }, 250);
+                 myStack -= betAmount;
+                 opponentStack -= betAmount;
+                 pot += (betAmount * 2);
+            }
+            
+            showStreetFeedback(resultType, scenario);
+            updateStackAndPotDisplays();
+        }
+
+        // --- UI Update Functions ---
+        function updateStackAndPotDisplays(){
+            document.getElementById('pot-display').textContent = `Pot: ${pot.toFixed(1)}`;
+            document.getElementById('stack-btn').textContent = `${myStack.toFixed(1)}bb`;
+            document.getElementById('stack-bb').textContent = `${opponentStack.toFixed(1)}bb`;
+        }
+        
+        function updateScore() {
+            const score = movesMade > 0 ? (totalScorePoints / movesMade) * 100 : 0;
+            const finalScore = Math.min(100, Math.round(score));
+            const progressCircle = document.getElementById('score-circle-progress');
+            const scorePercentageEl = document.getElementById('score-percentage');
+            const getScoreColor = (s) => {
+                if (s < 40) return { solid: '#f05650', transparent: 'rgba(240, 86, 80, 0.15)' };
+                if (s < 75) return { solid: '#FFA500', transparent: 'rgba(255, 165, 0, 0.15)' };
+                return { solid: '#23d96d', transparent: 'rgba(35, 217, 109, 0.15)' };
+            };
+            const colors = getScoreColor(finalScore);
+            progressCircle.style.strokeDashoffset = 100 - finalScore;
+            document.documentElement.style.setProperty('--score-color', colors.solid);
+            document.documentElement.style.setProperty('--score-bg-color', colors.transparent);
+            scorePercentageEl.textContent = `${finalScore}%`;
+            document.getElementById("score-stat-display").textContent = `${finalScore}%`;
+        }
+
+        function updateFeedbackGraphs() {
+            const totalActions = correctMovesCount + incorrectMovesCount + incorrectFrequencyCount;
+            if (totalActions === 0) {
+                 ['correct-bar-fill', 'incorrect-bar-fill', 'frequency-error-bar-fill'].forEach(id => document.getElementById(id).style.width = '0%');
+                 return;
+            };
+            document.getElementById('correct-count').textContent = correctMovesCount;
+            document.getElementById('incorrect-count').textContent = incorrectMovesCount;
+            // --- MODIFIED: Frequency error count only updates if RNG is active ---
+            document.getElementById('frequency-error-count').textContent = isRngMode ? incorrectFrequencyCount : 0; 
+
+            document.getElementById('correct-bar-fill').style.width = `${(correctMovesCount / totalActions) * 100}%`;
+            document.getElementById('incorrect-bar-fill').style.width = `${(incorrectMovesCount / totalActions) * 100}%`;
+            // --- MODIFIED: Frequency error bar only fills if RNG is active ---
+            document.getElementById('frequency-error-bar-fill').style.width = isRngMode ? `${(incorrectFrequencyCount / totalActions) * 100}%` : '0%';
+        }
+        
+        function updateComboStreak(){
+            const comboDisplay = document.getElementById('combo-streak-display');
+            if (comboStreak > 2) { 
+                comboDisplay.innerHTML = `<span class="combo-fire">🔥</span><span class="combo-number">${comboStreak}</span>`;
+                comboDisplay.style.display = 'flex';
+            } else {
+                comboDisplay.style.display = 'none';
+            }
+        }
+        function toggleRngMode(){ isRngMode = !isRngMode; document.getElementById('rng-icon').classList.toggle('off', !isRngMode); }
+
+        // --- Event Listeners ---
+        document.addEventListener("DOMContentLoaded", function() {
+            defineValidScenarios();
+            
+            // --- MODIFIED: Ensure no buttons are selected initially ---
+            document.querySelectorAll('.options-row').forEach(row => {
+                const allButton = row.querySelector('.all-button');
+                const regularButtons = Array.from(row.querySelectorAll('.option-button:not(.all-button)'));
+                const group = row.dataset.group;
+
+                // Ensure villain ALL button is disabled and not selected
+                if (group === 'villain' && allButton) {
+                    allButton.disabled = true;
+                    allButton.classList.remove('selected');
+                }
+                
+                // Ensure all other buttons are NOT selected initially
+                regularButtons.forEach(btn => btn.classList.remove('selected'));
+                if (allButton && group !== 'villain') { // Also deselect ALL buttons for other groups
+                    allButton.classList.remove('selected');
+                }
+            });
+            validateSelections(); // Initial validation to correctly set disabled states based on no initial selection
+
+            document.querySelectorAll(".option-button").forEach(b => b.addEventListener("click", handleOptionClick));
+            document.querySelector(".start-button").addEventListener("click", startTraining);
+            document.querySelectorAll(".action-button").forEach(b => b.addEventListener("click", (e) => selectAction(e.target.dataset.action)));
+            document.getElementById("repeat-hand-button").addEventListener("click", () => loadScenario(false));
+            document.querySelector(".back-button").addEventListener("click", goBack);
+            document.getElementById("rng-container").addEventListener("click", toggleRngMode);
+            document.getElementById("next-hand-button").addEventListener("click", () => loadScenario(true));
+            document.getElementById("proceed-to-turn-button").addEventListener("click", () => {
+                if(currentStreet === 'flop') proceedToTurn();
+            });
+        });
+    </script>
+</body>
+</html>
